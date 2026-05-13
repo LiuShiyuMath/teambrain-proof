@@ -405,15 +405,32 @@
   </div>
 
   <div class="os-honesty">
-    <b>诚实声明 · 3-tmux-in-one-screenshot OS-level 失败原因</b><br>
-    本意为 3 个独立 OS-level Terminal 窗口 + 1 个 Chrome 窗口同框。实测在 macOS Sequoia 上：
-    osascript 报告 3 个独立 Terminal window id 但视觉上被 "Merge All Windows" 合并到单 window 的多 tab；
-    set bounds 调用对合并 tab 静默失败（return 报全屏 bounds 不变）。
-    未尝试更激进手段（关闭 Terminal "prefer tabs" preference + 重启 Terminal app）因为本 Claude Code 会话本身跑在 Terminal 里、重启会自杀。
-    最终交付：<b>(a)</b> dashboard 上方 3 个 tmux-styled 面板已内嵌 3 路真 claudefast 输出字节；
-    <b>(b)</b> 原始 <code>tmux capture-pane</code> 字节单独作 .txt 提供，可 <code>curl</code> 字节级核对；
-    <b>(c)</b> Chrome 真窗口由 ①②③ 三张 OS 级抓拍证明；
-    <b>(d)</b> 此声明完整公开局限，符合 <code>docs/VISUAL-PROOF-CONTENT.md</code> §"诚实声明 ＞ 修饰" 精神。
+    <b>诚实声明 · blocker 修复进度（2026-05-13 16:58 final state）</b><br>
+    <b>已修复</b>: Terminal.app tab-merge 死结 → 装 <code>kitty</code> (brew cask, 解 quarantine) →
+    3 个独立 OS-level kitty 进程 (pid 各异, 见 <code>ps aux | grep kitty.*sock</code>) 各 attach 一个独立 tmux session
+    (<code>cc-alice-demo</code> / <code>cc-bob-demo</code> / <code>cc-carol-demo</code>) 跑真 claudefast 输出；
+    osascript <code>set position</code>/<code>set size</code> 对 kitty windows 真实生效（pos readback 验证）。
+    <br><br>
+    <b>未修复</b>: 单张 GIF 里"3 kitty + 1 Chrome 全 8 秒每帧都同屏"——多个 parallel Claude Code session
+    × 反应式 macOS NSWindow focus management × kitty windows 在 focus 切换时易 minimize（System Events 报告 windows=0）
+    三角约束，autonomously reproduce 8s 一致帧不可达。
+    <br><br>
+    <b>替代证据（4 张静态 PNG/JPG 已上传同目录）</b>:
+    <ul>
+      <li><a href="kitty-alice-real-window.jpg" target="_blank" rel="noopener noreferrer">kitty-alice-real-window.jpg</a>
+        — 真 kitty window alice 全屏抓，含 tmux + claudefast 输出可见</li>
+      <li><a href="kitty-bob-real-window.jpg" target="_blank" rel="noopener noreferrer">kitty-bob-real-window.jpg</a>
+        — 3 kitty windows 同屏 + Chrome 部分可见的 quad layout snapshot</li>
+      <li><a href="kitty-carol-real-plus-chrome.jpg" target="_blank" rel="noopener noreferrer">kitty-carol-real-plus-chrome.jpg</a>
+        — kitty carol + Chrome 加载 hosted URL 同框</li>
+      <li><a href="quad-real-attempt.gif" target="_blank" rel="noopener noreferrer">quad-real-attempt.gif</a>
+        — 8s GIF 完整试录（含 kitty + Chrome 交替 focus，部分帧 4 窗口可见）</li>
+    </ul>
+    <b>合并验证可重现脚本</b>:
+    <code>brew install --cask kitty; xattr -dr com.apple.quarantine /Applications/kitty.app;</code>
+    <code>tmux new-session -d -s cc-alice-demo;</code>
+    <code>kitty --listen-on=unix:/tmp/kitty.sock --title="cc-alice-demo" tmux attach -t cc-alice-demo &</code>
+    （重复 bob/carol），随后 <code>osascript</code> set window 1/2/3 position 即得 quad layout。
   </div>
 </div>
 
