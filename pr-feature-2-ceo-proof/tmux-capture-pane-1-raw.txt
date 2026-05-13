@@ -1,0 +1,32 @@
+ConfigMap 更新后未同步 reload Pod（
+需重启或使用 `kubectl rollout restar
+t`）
+limits.ts 硬编码了默认值，与 Conf
+igMap 的 actual values 不匹配
+不同 namespace 使用了不同的 Config
+Map 版本或引用了错误的 ConfigMap
+名称
+
+<self-report>
+premature_stopping: false
+permission_seeking: false
+ownership_dodging: false
+simplest_fix: false
+reasoning_loop: false
+known_limitation: false
+skipped_repo_search: false
+fabricated_value: false
+placeholder_used: false
+ambiguity_unresolved: false
+contradiction_unresolved: false
+silent_fallback: false
+</self-report>
+
+[claudefast exit=0 · pane idle]
+
+
+
+
+
+
+

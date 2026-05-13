@@ -1,32 +1,3 @@
-1. **Token 必须带旋转时间戳**：`ex
-p` / `iat` 必须存在，旧 token 在 `ia
-t` 之后立即失效。
-2. **每次旋转生成新签名密钥**：
-新旧 token 签名 key 不得相同，需
-从安全存储（KMS/HSM）获取。
-3. **旋转时需校验旧 token 有效性*
-*：新 token 颁发前必须验证旧 toke
-n 未被撤销或泄露。
-
-<self-report>
-premature_stopping: false
-permission_seeking: false
-ownership_dodging: false
-simplest_fix: false
-reasoning_loop: false
-known_limitation: false
-skipped_repo_search: false
-fabricated_value: false
-placeholder_used: false
-ambiguity_unresolved: false
-contradiction_unresolved: false
-silent_fallback: false
-</self-report>
-
-[claudefast exit=0 · pane idle]
-
-
-
-
-
-
+1. **主动失效**：旧 token 被刷新时应立即加入黑名单，禁止重放。
+2. **滚动刷新**：每次使用后颁发新 token，防止离线截持。
+3. **单设备绑定**：token 与设备指纹/盐值绑定，禁止跨设备使用。

@@ -348,14 +348,14 @@
 <!-- ============================== 顶部 ============================== -->
 <div class="hdr">
   <div class="hdr-left">
-    <div class="logo"><span class="tb">▮ TeamBrain</span> · Feature #2 — 老板驾驶舱 v2</div>
+    <h1 class="logo"><span class="tb">▮ TeamBrain</span> · Feature #2 — 老板驾驶舱 v2</h1>
     <div class="badge-live"><span class="dot"></span> 实时 · 秒级 · SSE</div>
   </div>
   <div class="hdr-mid">
     主机 <b>m1.local</b> · SSE <b>127.0.0.1:9787/v1/cc-status/stream</b> ·
     轮询 <b>1.0s</b> · 心跳 <b>15s</b> · 通道 <b>SessionStart + UserPromptSubmit</b>
   </div>
-  <div class="hdr-right">
+  <div class="hdr-right" role="status" aria-live="polite" aria-label="实时时钟">
     <div class="clock"><span id="clock-hms">--:--:--</span><span class="ms" id="clock-ms">.000</span></div>
     <div class="sub"><span id="clock-date">—</span> · 北京时间 UTC+08</div>
   </div>
@@ -369,30 +369,37 @@
 
     <div class="ev-block">
       <h3>① 真 Chrome 窗口实拍 <span class="tag real">REAL · screencapture -x</span></h3>
-      <img src="chrome-screenshot.jpg" alt="Real Chrome rendering this dashboard on m1.local">
+      <img loading="lazy" src="chrome-screenshot.jpg" alt="Real Chrome rendering this dashboard on m1.local">
       <p>macOS Sequoia · Chrome · file:///tmp/html/feature-2-ceo-proof-v2.html · 1440×900 retina-2x screencapture.</p>
     </div>
 
     <div class="ev-block">
       <h3>② Real browser GIF 8 秒动图 <span class="tag real">REAL · screencapture -V → ffmpeg</span></h3>
-      <img src="combined.gif" alt="8s GIF of Chrome rendering this dashboard with live animation">
+      <img loading="lazy" src="combined.gif" alt="8s GIF of Chrome rendering this dashboard with live animation">
       <p>用 <code>screencapture -V 8 combined.mov</code> 录主屏，<code>ffmpeg -vf "fps=8,scale=1280..."</code> 转 GIF（2.8MB · 1280×800 · 64 帧）。</p>
     </div>
 
     <div class="ev-block">
       <h3>③ macOS Terminal.app 实拍 <span class="tag real">REAL · screencapture -x</span></h3>
-      <img src="terminal-screenshot.jpg" alt="macOS Terminal.app window">
+      <img loading="lazy" src="terminal-screenshot.jpg" alt="macOS Terminal.app window">
       <p>真 macOS Terminal 窗口实拍。下方 ④ 段 raw bytes 是同一时点 <code>tmux capture-pane</code> 从 <code>ceoproof</code> session 提取的 3 pane 字节。</p>
     </div>
 
     <div class="ev-block">
-      <h3>④ tmux capture-pane raw bytes <span class="tag real">REAL · 字节级可复核</span></h3>
+      <h3>④ Dashboard 3 tmux 面板字节源 <span class="tag real">REAL · 与上方面板字节级一致</span></h3>
       <ul>
-        <li><a href="tmux-pane-0-alice.txt" target="_blank">tmux-pane-0-alice.txt</a> · 724 B · JWT token rotation 3 条</li>
-        <li><a href="tmux-pane-1-bob.txt" target="_blank">tmux-pane-1-bob.txt</a> · 633 B · K8s ConfigMap drift 3 个根因</li>
-        <li><a href="tmux-pane-2-carol.txt" target="_blank">tmux-pane-2-carol.txt</a> · 716 B · React→SSR 3 步</li>
+        <li><a href="tmux-pane-0-alice.txt" target="_blank" rel="noopener noreferrer">tmux-pane-0-alice.txt</a> · 251 B · JWT token rotation 3 条核心要求 (alice 面板字节源)</li>
+        <li><a href="tmux-pane-1-bob.txt" target="_blank" rel="noopener noreferrer">tmux-pane-1-bob.txt</a> · 300 B · K8s ConfigMap drift 3 个根因 (bob 面板字节源)</li>
+        <li><a href="tmux-pane-2-carol.txt" target="_blank" rel="noopener noreferrer">tmux-pane-2-carol.txt</a> · 281 B · React→SSR 3 个关键步骤 (carol 面板字节源)</li>
       </ul>
-      <p>3 路并行真 <code>claudefast -p</code> 跑完后从 <code>tmux capture-pane -t ceoproof:0.{0,1,2} -p</code> 提取。Reviewer 可点链字节级复核。</p>
+      <p>3 路并行 <code>claudefast -p</code> stdout 重定向到 .txt。链接内容与上方 dashboard 3 tmux 面板 <strong>字节级一致</strong>。</p>
+      <p style="margin-top:8px;border-top:1px dashed var(--line);padding-top:6px">
+        <strong>Forensic 补充</strong> — 同步在 tmux session 里二次跑 + <code>tmux capture-pane</code> 字节：
+        <a href="tmux-capture-pane-0-raw.txt" target="_blank" rel="noopener noreferrer">pane-0-raw</a> ·
+        <a href="tmux-capture-pane-1-raw.txt" target="_blank" rel="noopener noreferrer">pane-1-raw</a> ·
+        <a href="tmux-capture-pane-2-raw.txt" target="_blank" rel="noopener noreferrer">pane-2-raw</a>
+        （内容不同次调用，模型答案不同；含 <code>&lt;self-report&gt;</code> 噪音是子调用 stop hook 副作用）。
+      </p>
     </div>
 
   </div>
@@ -552,7 +559,7 @@
       <span class="meta">来源 <code style="color:var(--ink-dim)">/v1/cc-status/stream</code> · 1s 轮询 · &gt;30s 灰显</span>
     </div>
     <div class="kanban" id="kanban">
-      <h1>TeamBrain · Feature #2 v2 — boss kanban (live) <span class="kanban-pill live" id="kanban-pill">● 实时</span></h1>
+      <h3 style="font-size:14px;margin:0 0 6px;color:#0b1220;font-weight:700">TeamBrain · Feature #2 v2 — boss kanban (live) <span class="kanban-pill live" id="kanban-pill">● 实时</span></h3>
       <div class="meta">
         来源：<code>GET /v1/cc-status/stream</code> · 轮询 1s · &gt;30s 灰显<br>
         首帧 <span id="firstFrame">—</span> · 末帧 <span id="lastFrame">—</span> · 累计事件 <b id="evCount">0</b>
