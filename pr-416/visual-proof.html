@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>Visual Proof of Work — PR #416 · daily-standup skill</title>
+<title>视觉证据 — PR #416 · daily-standup skill</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Visual proof of work for TeamBrain PR #416 — daily-standup project skill that summarizes 24h GitHub PR/issue delta in duck voice.">
+<meta name="description" content="TeamBrain PR #416 视觉证据 — daily-standup 项目级 skill 把 24 小时 GitHub PR/issue 增量压缩成六桶分组报告，再用 CEO 鸭口吻汇报。">
 <style>
   :root {
     --paper:       #fefcf7;
@@ -22,10 +22,12 @@
     --link:        #1e3a8a;
     --link-visited:#3b2a78;
 
-    --serif: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, 'URW Palladio L', Georgia, 'Times New Roman', serif;
-    --mono:  ui-monospace, 'SF Mono', 'JetBrains Mono', 'IBM Plex Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+    --serif:    'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, 'URW Palladio L', Georgia, 'Songti SC', 'Hiragino Mincho ProN', 'STSong', SimSun, 'Times New Roman', serif;
+    --serif-cn: 'Songti SC', 'Hiragino Mincho ProN', 'STSong', SimSun, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+    --sans-cn:  'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', 'Heiti SC', system-ui, sans-serif;
+    --mono:     ui-monospace, 'SF Mono', 'JetBrains Mono', 'IBM Plex Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 
-    --max:     880px;
+    --max:      880px;
     --max-wide: 1200px;
   }
 
@@ -37,13 +39,12 @@
     color: var(--ink);
     font-family: var(--serif);
     font-size: 17px;
-    line-height: 1.55;
+    line-height: 1.7;
     font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Paper grain via repeating ultra-subtle radial gradient */
   body::before {
     content: "";
     position: fixed; inset: 0;
@@ -63,10 +64,7 @@
     margin: 0 auto;
     padding: 56px 28px 96px;
   }
-  .wide {
-    max-width: var(--max-wide);
-    margin: 0 auto;
-  }
+  .wide { max-width: var(--max-wide); margin: 0 auto; }
 
   /* ---------- HERO ---------- */
   .hero { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 40px; }
@@ -84,8 +82,8 @@
     font-family: var(--serif);
     font-weight: 600;
     font-size: clamp(34px, 5vw, 52px);
-    line-height: 1.08;
-    letter-spacing: -0.012em;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
     margin: 0 0 12px;
     color: var(--ink);
   }
@@ -99,10 +97,11 @@
   .subtitle {
     font-family: var(--serif);
     font-style: italic;
-    font-size: 20px;
+    font-size: 19px;
     color: var(--ink-soft);
     margin: 0 0 20px;
     max-width: 640px;
+    line-height: 1.6;
   }
   .meta {
     display: flex; flex-wrap: wrap; gap: 6px 16px;
@@ -135,23 +134,25 @@
   h2.section-title {
     font-family: var(--serif);
     font-weight: 600;
-    font-size: 26px;
-    line-height: 1.2;
+    font-size: 25px;
+    line-height: 1.3;
     margin: 0;
     color: var(--ink);
   }
-  h2.section-title .zh {
+  h2.section-title .en {
     font-weight: 400;
-    color: var(--ink-soft);
-    font-size: 0.78em;
+    color: var(--muted);
+    font-size: 0.72em;
     margin-left: 12px;
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
   }
 
   .lede {
     font-family: var(--serif);
     color: var(--ink-soft);
     font-size: 16.5px;
-    line-height: 1.6;
+    line-height: 1.75;
     max-width: 640px;
     margin: 0 0 24px;
   }
@@ -225,12 +226,10 @@
     font-size: 18px;
     color: var(--ink);
   }
-  .count .delta { font-weight: 400; font-size: 12.5px; color: var(--muted); margin-left: 6px; }
   .count.pass-tx { color: var(--pass); }
   .count.fail-tx { color: var(--fail); }
   .count.warn-tx { color: var(--warn); }
 
-  /* PR/issue chip links */
   a.gh {
     font-family: var(--mono);
     font-size: 12.5px;
@@ -273,7 +272,7 @@
   ol.themes .theme-body {
     font-size: 15.5px;
     color: var(--ink-soft);
-    line-height: 1.55;
+    line-height: 1.7;
   }
 
   /* ---------- BENCHMARK BAR ---------- */
@@ -334,7 +333,6 @@
   }
   .bench-delta strong { color: var(--pass); }
 
-  /* assertion table */
   .assert-result {
     font-family: var(--mono);
     font-weight: 700;
@@ -358,10 +356,10 @@
     font-weight: 600;
     vertical-align: 1px;
   }
-  .badge.warn { background: rgba(184, 85, 28, 0.12); color: var(--warn); border: 1px solid rgba(184, 85, 28, 0.3); }
-  .badge.open { background: rgba(184, 85, 28, 0.12); color: var(--warn); border: 1px solid rgba(184, 85, 28, 0.3); }
+  .badge.warn  { background: rgba(184, 85, 28, 0.12); color: var(--warn); border: 1px solid rgba(184, 85, 28, 0.3); }
+  .badge.open  { background: rgba(184, 85, 28, 0.12); color: var(--warn); border: 1px solid rgba(184, 85, 28, 0.3); }
   .badge.ready { background: rgba(21, 128, 61, 0.10); color: var(--pass); border: 1px solid rgba(21, 128, 61, 0.3); }
-  .badge.epic { background: rgba(91, 33, 182, 0.10); color: #5b21b6; border: 1px solid rgba(91, 33, 182, 0.3); }
+  .badge.epic  { background: rgba(91, 33, 182, 0.10); color: #5b21b6; border: 1px solid rgba(91, 33, 182, 0.3); }
   .nextstep {
     font-family: var(--mono);
     font-size: 12.5px;
@@ -401,17 +399,17 @@
     font-size: 22px;
     margin: 0 0 14px;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.4;
   }
-  .cta p { font-size: 16px; line-height: 1.55; margin: 0 0 12px; color: var(--ink-soft); }
+  .cta p { font-size: 16px; line-height: 1.75; margin: 0 0 12px; color: var(--ink-soft); }
   .cta p strong { color: var(--ink); }
   .cta ul { padding-left: 22px; margin: 4px 0 0; }
-  .cta ul li { margin-bottom: 6px; color: var(--ink-soft); }
+  .cta ul li { margin-bottom: 8px; color: var(--ink-soft); line-height: 1.7; }
   .cta code { font-family: var(--mono); font-size: 13.5px; background: var(--paper); padding: 1px 5px; border: 1px solid var(--rule); }
 
   /* ---------- ROUTING MATRIX (compact) ---------- */
   .routing td:first-child { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); }
-  .routing td:last-child { font-family: var(--mono); font-size: 13px; }
+  .routing td:last-child  { font-family: var(--serif); font-size: 14.5px; }
   .routing strong code { background: var(--paper-shade); padding: 1px 4px; }
   .routing .this {
     background: rgba(21, 128, 61, 0.08);
@@ -436,10 +434,10 @@
     border-left: 3px solid var(--ink-soft);
     font-family: var(--mono);
     font-size: 13px;
-    line-height: 1.8;
+    line-height: 1.85;
   }
   .files .fpath { color: var(--ink); font-weight: 600; }
-  .files .fnote { color: var(--muted); }
+  .files .fnote { color: var(--muted); font-family: var(--serif); font-size: 14px; }
 
   /* ---------- FOOTER ---------- */
   footer {
@@ -455,10 +453,7 @@
     display: flex; flex-wrap: wrap; gap: 6px 18px;
     margin-bottom: 18px;
   }
-  footer .badge-text {
-    color: var(--ink-soft);
-    font-weight: 600;
-  }
+  footer .badge-text { color: var(--ink-soft); font-weight: 600; }
   footer .badge-text .num { color: var(--ink); }
   footer .duck {
     margin-top: 26px;
@@ -467,10 +462,17 @@
     line-height: 1.35;
     white-space: pre;
   }
-  footer p { margin: 6px 0; max-width: 640px; }
+  footer p {
+    margin: 6px 0;
+    max-width: 720px;
+    font-family: var(--serif);
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.75;
+  }
   footer a { color: var(--link); text-decoration: none; border-bottom: 1px dotted rgba(30,58,138,0.4); }
 
-  /* ---------- COLOPHON STAMP top right ---------- */
+  /* ---------- STAMP ---------- */
   .stamp {
     position: absolute;
     top: 56px;
@@ -483,14 +485,21 @@
     border: 1.5px solid var(--warn);
     padding: 6px 10px;
     text-transform: uppercase;
-    line-height: 1.2;
+    line-height: 1.25;
     text-align: center;
     background: var(--paper);
     z-index: 2;
   }
+  .stamp .zh-line {
+    font-family: var(--sans-cn);
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    color: var(--warn);
+    text-transform: none;
+  }
   .stamp .stamp-line2 { color: var(--ink-soft); border-color: var(--ink-soft); font-size: 9px; }
 
-  /* ---------- DROP CAPS for first lede ---------- */
+  /* ---------- DROP CAP ---------- */
   .drop-cap::first-letter {
     font-family: var(--serif);
     font-size: 3.6em;
@@ -520,7 +529,6 @@
     .section-head { flex-direction: column; gap: 4px; }
   }
 
-  /* ---------- print refinement ---------- */
   @media print {
     body { background: #fff; }
     .stamp { display: none; }
@@ -532,7 +540,8 @@
 <body>
 
 <div class="stamp" aria-hidden="true">
-  Visual Proof<br>of Work<br>
+  <span class="zh-line">视觉证据</span><br>
+  Visual Proof<br>
   <span class="stamp-line2">2026·05·13</span>
 </div>
 
@@ -542,21 +551,21 @@
   <header class="hero">
     <div class="eyebrow">
       <span class="dot"></span>
-      <span>TeamBrain · Pull Request Evidence Sheet</span>
+      <span>TeamBrain · Pull Request 视觉证据</span>
       <span class="sep">·</span>
-      <span>Edition 2026.05.13-bj</span>
+      <span>2026.05.13 北京</span>
     </div>
-    <h1 class="title">Visual Proof of Work <span class="hash">— PR #416</span></h1>
+    <h1 class="title">视觉证据 <span class="hash">PR #416</span></h1>
     <p class="subtitle">
       <code style="font-family:var(--mono); font-size:0.85em; background:var(--paper-shade); padding:1px 6px;">daily-standup</code>
-      &nbsp;&mdash;&nbsp; a TeamBrain project skill that compresses 24 hours of GitHub PR &amp; issue activity into a six-bucket delta report, theme-grouped and rendered in CEO-duck voice.
+      &nbsp;&mdash;&nbsp;一个 TeamBrain 项目级 skill，把过去 24 小时的 GitHub PR 与 issue 活动压成六桶事件 + 主题分组报告，再用 CEO 鸭口吻汇报给鸭老板。
     </p>
     <div class="meta">
-      <span>branch <span class="num">worktree-daily-standup-skill</span></span>
+      <span>分支 <span class="num">worktree-daily-standup-skill</span></span>
       <span class="sep">·</span>
       <span><span class="num">2</span> commits</span>
       <span class="sep">·</span>
-      <span><span class="num">3</span> files</span>
+      <span><span class="num">3</span> 文件</span>
       <span class="sep">·</span>
       <span class="num" style="color:var(--pass);">+402</span>
       <span style="color:var(--rule);">/</span>
@@ -567,17 +576,17 @@
   </header>
 
   <p class="lede drop-cap">
-    This page is the reviewer-facing evidence sheet for PR #416. It exists because the daily-standup skill itself has no UI to demonstrate &mdash; the skill is a markdown contract that shapes how Claude Code answers <em>"what happened since yesterday morning?"</em>. To prove it works the page shows (i) the verbatim ASCII banner from the skill file, (ii) the live output the skill produced this morning when first invoked, (iii) a controlled benchmark against an identical run without the skill, and (iv) the remaining items a reviewer should look at before merging.
+    本页是 PR #416 给 reviewer 看的视觉证据。daily-standup skill 本身没有 UI 可以展示——它是一份 markdown 契约，约束 Claude Code 怎么回答「昨天早上到现在发生了什么？」这类问题。为了证明它管用，本页展示 (i) skill 文件里逐字 ASCII 横幅，(ii) 今早 skill 第一次被调用时的真实输出，(iii) 一组用同一 prompt 跑出来的对照实验（with-skill vs without-skill），以及 (iv) reviewer 在按合并按钮前应该看一眼的待办清单。
   </p>
 
   <!-- ============================== A — ASCII BANNER ============================== -->
   <section id="a">
     <div class="section-head">
       <span class="marker">§ A</span>
-      <h2 class="section-title">What the skill produces <span class="zh">— ASCII duck banner</span></h2>
+      <h2 class="section-title">skill 产出 <span class="en">ASCII duck banner</span></h2>
     </div>
     <p class="lede">
-      Verbatim header from <code style="font-family:var(--mono); background:var(--paper-shade); padding:1px 5px; font-size:0.92em;">.claude/skills/daily-standup/SKILL.md</code>. Reviewers can cross-check against the PR diff &mdash; the banner is the first 12 lines of the skill file.
+      下方是 <code style="font-family:var(--mono); background:var(--paper-shade); padding:1px 5px; font-size:0.92em;">.claude/skills/daily-standup/SKILL.md</code> 文件开头的逐字 ASCII 横幅。Reviewer 可以直接在 PR diff 里对照 —— 横幅就是 skill 文件的前 12 行。
     </p>
     <pre class="ascii">   ____    _    ___ _  __   __    ___ _____  _    _   _ ___  _   _ ____
   |  _ \  / \  |_ _| | \ \ / /   / __|_   _|/ \  | \ | |   \| | | |  _ \
@@ -595,21 +604,21 @@
   <section id="b">
     <div class="section-head">
       <span class="marker">§ B</span>
-      <h2 class="section-title">Live demo — today's 24h delta</h2>
+      <h2 class="section-title">实测 — 今日 24h 增量 <span class="en">today's window</span></h2>
     </div>
     <p class="lede">
-      Output captured this morning when the skill ran on the canonical prompt <em>"what happened since yesterday 9am Beijing?"</em>. Window: <code style="font-family:var(--mono); background:var(--paper-shade); padding:1px 5px;">2026-05-12T01:00:00Z → 2026-05-13T01:00:00Z</code> (UTC). Every PR/issue number below links to its GitHub permalink.
+      今早 skill 在规范 prompt「<em>昨天 9 点到今早 9 点北京时间发生了什么？</em>」上跑出的结果。窗口：<code style="font-family:var(--mono); background:var(--paper-shade); padding:1px 5px;">2026-05-12T01:00:00Z → 2026-05-13T01:00:00Z</code>（UTC）。下表每个 PR/issue 号都是 GitHub 永久链接。
     </p>
 
     <table class="data">
-      <colgroup><col style="width:4px"><col style="width:32%"><col style="width:130px"><col></colgroup>
+      <colgroup><col style="width:4px"><col style="width:36%"><col style="width:130px"><col></colgroup>
       <thead>
-        <tr><th></th><th>Bucket</th><th>Count</th><th>Sample IDs</th></tr>
+        <tr><th></th><th>事件桶</th><th>数量</th><th>样例编号</th></tr>
       </thead>
       <tbody>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td>PRs merged</td>
+          <td>PR 已合并</td>
           <td><span class="count pass-tx">60</span></td>
           <td>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/329">#329</a>
@@ -619,7 +628,7 @@
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/341">#341</a>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/342">#342</a>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/346">#346</a>
-            m5 slice chain
+            m5 slice 链
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/356">#356</a>–<a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/367">#367</a>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/390">#390</a>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/398">#398</a>
@@ -628,25 +637,25 @@
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar neutral"></span></td>
-          <td>PRs created</td>
+          <td>PR 已新建</td>
           <td><span class="count">66</span></td>
-          <td><span class="num" style="font-family:var(--mono); font-size:13px; color:var(--ink-soft);">same-day-merge rate ≈ 91% — driver velocity healthy</span></td>
+          <td><span style="font-family:var(--mono); font-size:13px; color:var(--ink-soft);">同日合并率约 91%，driver 速度健康</span></td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar warn"></span></td>
-          <td>PRs closed without merge</td>
+          <td>PR 未合并直接关闭</td>
           <td><span class="count warn-tx">3</span></td>
           <td>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/345">#345</a> revert
             <span style="color:var(--rule);">·</span>
-            <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/375">#375</a> superseded by #383
+            <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/375">#375</a> 被 #383 取代
             <span style="color:var(--rule);">·</span>
-            <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/376">#376</a> superseded by m5 chain
+            <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/376">#376</a> 被 m5 链取代
           </td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar warn"></span></td>
-          <td>PRs still <strong>OPEN</strong> at window close</td>
+          <td>PR 仍 <strong>开放</strong>（窗口截止时）</td>
           <td><span class="count warn-tx">3</span></td>
           <td>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/395">#395</a>
@@ -656,24 +665,24 @@
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar neutral"></span></td>
-          <td>Issues created</td>
+          <td>Issue 已新建</td>
           <td><span class="count">12</span></td>
           <td>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/issues/330">#330</a>–<a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/issues/372">#372</a>
-            <span style="color:var(--ink-soft); font-family:var(--mono); font-size:12.5px;">incl.</span>
+            <span style="color:var(--ink-soft); font-family:var(--serif); font-size:14px;">含</span>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/issues/335">#335</a>
             <span class="badge epic">EPIC</span>
           </td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td>Issues closed</td>
+          <td>Issue 已关闭</td>
           <td><span class="count pass-tx">18</span></td>
-          <td><span style="font-family:var(--mono); font-size:13px; color:var(--ink-soft);">net <strong style="color:var(--pass);">−6</strong> · backlog shrank</span></td>
+          <td><span style="font-family:var(--serif); font-size:14.5px; color:var(--ink-soft);">净 <strong style="color:var(--pass);">−6</strong>，待办库存缩小</span></td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar warn"></span></td>
-          <td>Issues still open in window</td>
+          <td>Issue 窗口内仍开放</td>
           <td><span class="count warn-tx">3</span></td>
           <td>
             <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/issues/292">#292</a>
@@ -689,83 +698,83 @@
   <section id="c">
     <div class="section-head">
       <span class="marker">§ C</span>
-      <h2 class="section-title">Themes the skill grouped <span class="zh">— eight major</span></h2>
+      <h2 class="section-title">skill 归类的主题 <span class="en">eight major themes</span></h2>
     </div>
     <p class="lede">
-      After bucketing events by lifecycle state, the skill re-groups by <em>topic</em>. Reviewers see signal not noise: <strong>where the project actually moved in 24h</strong>, not 60 individual diff stats.
+      事件桶按生命周期分类之后，skill 再做<em>按主题</em>的二次归类。Reviewer 看到的是信号不是噪声：<strong>过去 24 小时项目究竟在哪几条线上动了</strong>，而不是 60 个独立的 diff stat。
     </p>
     <ol class="themes">
       <li>
-        <span class="theme-title">Feature 1 — Rule-loop &amp; m5 propagation</span>
+        <span class="theme-title">Feature 1 — 规则闭环 &amp; m5 propagation</span>
         <span class="theme-body">
-          The 7-slice chain
+          七刀切的 slice 链
           <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/356">#356</a>–<a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/367">#367</a>
-          closes
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/issues/332">#332</a>;
-          Counterfactual Ablation paired t-test (scipy) lands at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/365">#365</a>
-          &mdash; end-to-end learning is now LLM-uncheatably verifiable.
+          关闭
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/issues/332">#332</a>；
+          Counterfactual Ablation paired t-test（scipy）落在
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/365">#365</a>，
+          端到端学习闭环现在能被 LLM 不能伪造的第三方工具裁判。
         </span>
       </li>
       <li>
-        <span class="theme-title">Feature 2 — Boss real-time kanban</span>
+        <span class="theme-title">Feature 2 — 老板实时看板</span>
         <span class="theme-body">
-          Scope收敛 at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/378">#378</a>,
-          v2 plan + SSE + single-host demo at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/401">#401</a>,
-          v3 wires SessionStart + UserPromptSubmit hooks at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/404">#404</a>.
+          scope 收敛
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/378">#378</a>，
+          v2 plan + SSE + 单机 demo
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/401">#401</a>，
+          v3 接 SessionStart + UserPromptSubmit hook
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/404">#404</a>。
         </span>
       </li>
       <li>
-        <span class="theme-title">Feature 3 — Videos</span>
+        <span class="theme-title">Feature 3 — 视频上传</span>
         <span class="theme-body">
-          Upload wedge at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/400">#400</a>,
-          boss-grade <code style="font-family:var(--mono);">/videos</code> dashboard at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/403">#403</a>.
+          上传楔子
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/400">#400</a>，
+          老板级 <code style="font-family:var(--mono);">/videos</code> dashboard
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/403">#403</a>。
         </span>
       </li>
       <li>
-        <span class="theme-title">RocketTeam frontend takeover</span>
+        <span class="theme-title">RocketTeam 接管前端</span>
         <span class="theme-body">
-          Submodule landed at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/390">#390</a>,
-          becomes active frontend at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/398">#398</a>,
-          static export replaces <code style="font-family:var(--mono);">apps/landing</code> on GH Pages at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/402">#402</a>.
+          submodule 落地
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/390">#390</a>，
+          升为 active frontend
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/398">#398</a>，
+          static export 替换 <code style="font-family:var(--mono);">apps/landing</code> GH Pages
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/402">#402</a>。
         </span>
       </li>
       <li>
-        <span class="theme-title">Symphony — second autonomous driver</span>
+        <span class="theme-title">Symphony — 第二只自主 driver</span>
         <span class="theme-body">
-          Orchestration service at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/363">#363</a>;
-          two-driver coexistence doc with <code style="font-family:var(--mono);">track:symphony</code> routing label at
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/396">#396</a>.
+          orchestration service
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/363">#363</a>；
+          两-driver coexistence doc + <code style="font-family:var(--mono);">track:symphony</code> 路由 label
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/396">#396</a>。
         </span>
       </li>
       <li>
-        <span class="theme-title">Cross-host mutex hardening</span>
+        <span class="theme-title">跨主机互斥加固</span>
         <span class="theme-body">
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/347">#347</a> <code style="font-family:var(--mono);">grill-working</code> label (implement phase) +
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/361">#361</a> <code style="font-family:var(--mono);">grilling</code> label (grill phase) close the multi-host race window.
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/347">#347</a> <code style="font-family:var(--mono);">grill-working</code> label（implement 阶段）+
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/361">#361</a> <code style="font-family:var(--mono);">grilling</code> label（grill 阶段）共同关闭多主机抢锁窗口。
         </span>
       </li>
       <li>
-        <span class="theme-title">Production bug fixes</span>
+        <span class="theme-title">生产 bug 救火</span>
         <span class="theme-body">
           <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/346">#346</a> embedder daemon RAM bomb ·
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/341">#341</a> missing <code style="font-family:var(--mono);">bin-digital-twin-tap</code> ·
-          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/342">#342</a> auto-update broken.
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/341">#341</a> 缺失 <code style="font-family:var(--mono);">bin-digital-twin-tap</code> ·
+          <a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/342">#342</a> 自动更新挂了。
         </span>
       </li>
       <li>
-        <span class="theme-title">Docs canonical-answer wave</span>
+        <span class="theme-title">文档定锚浪潮</span>
         <span class="theme-body">
-          20+ docs PRs codifying issue lifecycle, branch protection, PR language matrix, pop-open HTML, debugging recipes, triage rules. The repo's institutional memory got materially denser this day.
+          20+ 篇 docs PR 把 issue 生命周期、分支保护、PR 语言公约、pop-open HTML、debug 配方、triage 规则全部沉淀成可 grep 的契约。仓库的制度记忆当天显著加密。
         </span>
       </li>
     </ol>
@@ -775,22 +784,22 @@
   <section id="d" class="still-open">
     <div class="section-head">
       <span class="marker">§ D</span>
-      <h2 class="section-title">Still open <span class="zh">— 还开着、需要看一眼</span></h2>
+      <h2 class="section-title">还开着、需要看一眼 <span class="en">still open · action recommended</span></h2>
     </div>
     <p class="lede">
-      The single most important section. A daily standup that lists 60 merges and zero next-steps is a transcript, not a report. Each row below names a specific action a maintainer can take in the next 10 minutes.
+      整张报告里最重要的一段。一份只列出 60 个 merge 却不给下一步建议的早报，是流水账不是报告。下表每一行都给出 maintainer 10 分钟内可以做的一个具体动作。
     </p>
 
     <table class="data">
-      <colgroup><col style="width:4px"><col style="width:18%"><col style="width:34%"><col style="width:18%"><col></colgroup>
+      <colgroup><col style="width:4px"><col style="width:16%"><col style="width:32%"><col style="width:18%"><col></colgroup>
       <thead>
-        <tr><th></th><th>Item</th><th>Status</th><th>Owner</th><th>建议下一步 / Next step</th></tr>
+        <tr><th></th><th>条目</th><th>状态</th><th>负责人</th><th>建议下一步</th></tr>
       </thead>
       <tbody>
         <tr>
           <td class="marker-cell"><span class="bar warn"></span></td>
           <td><a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/pull/405" style="font-size:14px;">PR #405</a></td>
-          <td><span class="badge open">OPEN</span> &nbsp; landing <code style="font-family:var(--mono); font-size:12.5px;">/tasks/</code> crash fix</td>
+          <td><span class="badge open">开放</span> &nbsp; landing <code style="font-family:var(--mono); font-size:12.5px;">/tasks/</code> 崩溃修复</td>
           <td><span style="font-family:var(--mono); font-size:12.5px;">LiuShiyuMath</span></td>
           <td><span class="nextstep">等 <code>/review</code> PASS 再 squash-merge</span></td>
         </tr>
@@ -799,21 +808,21 @@
           <td><a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/issues/371" style="font-size:14px;">Issue #371</a></td>
           <td><span class="badge ready">GRILL-READY</span>+<span class="badge ready">DOCS</span> &nbsp; 日报总结功能</td>
           <td><span style="font-family:var(--mono); font-size:12.5px;">horton2048</span></td>
-          <td><span class="nextstep">driver-dispatchable → <code>/fixed-flow-driver 371</code></span></td>
+          <td><span class="nextstep">driver 可调度 → <code>/fixed-flow-driver 371</code></span></td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
           <td><a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/issues/372" style="font-size:14px;">Issue #372</a></td>
           <td><span class="badge ready">GRILL-READY</span>+<span class="badge ready">DOCS</span> &nbsp; 实时项目成员进展</td>
           <td><span style="font-family:var(--mono); font-size:12.5px;">libz-renlab-ai</span></td>
-          <td><span class="nextstep">driver-dispatchable → <code>/fixed-flow-driver 372</code></span></td>
+          <td><span class="nextstep">driver 可调度 → <code>/fixed-flow-driver 372</code></span></td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar neutral"></span></td>
           <td><a class="gh" href="https://github.com/libz-renlab-ai/TeamBrain/issues/335" style="font-size:14px;">Issue #335</a></td>
-          <td><span class="badge epic">EPIC</span> &nbsp; Business feature tracker</td>
+          <td><span class="badge epic">EPIC</span> &nbsp; 业务特性进度追踪</td>
           <td><span style="font-family:var(--mono); font-size:12.5px;">LiuShiyuMath</span></td>
-          <td><span class="nextstep">等 child issues 全 close 再人手 close <em>(agent 禁 close)</em></span></td>
+          <td><span class="nextstep">等子 issue 全 close 再人手 close <em>（agent 禁 close）</em></span></td>
         </tr>
       </tbody>
     </table>
@@ -823,10 +832,10 @@
   <section id="e">
     <div class="section-head">
       <span class="marker">§ E</span>
-      <h2 class="section-title">Benchmark <span class="zh">— with-skill vs baseline</span></h2>
+      <h2 class="section-title">对照实验 <span class="en">with-skill vs baseline</span></h2>
     </div>
     <p class="lede">
-      Two parallel subagents handled the same prompt under identical conditions; one read <code style="font-family:var(--mono); background:var(--paper-shade); padding:1px 5px;">SKILL.md</code>, the other did not. Grading by 7 assertions in <code style="font-family:var(--mono); background:var(--paper-shade); padding:1px 5px;">evals/evals.json</code>.
+      两只独立 subagent 在同一条件下处理同一 prompt，一只读 <code style="font-family:var(--mono); background:var(--paper-shade); padding:1px 5px;">SKILL.md</code>，一只不读。判分依据：<code style="font-family:var(--mono); background:var(--paper-shade); padding:1px 5px;">evals/evals.json</code> 里的 7 条 assertion。
     </p>
 
     <div class="bench">
@@ -836,62 +845,62 @@
         <div class="bench-num pass-tx">7 / 7</div>
       </div>
       <div class="bench-row">
-        <div class="bench-label without">without_skill (baseline)</div>
+        <div class="bench-label without">without_skill（基线）</div>
         <div class="bench-bar"><div class="bench-fill fail" style="width:29%;"></div></div>
         <div class="bench-num fail-tx">2 / 7</div>
       </div>
       <div class="bench-delta">
-        <strong>Δ +5 assertions (+71pp)</strong> &nbsp;·&nbsp; tokens +17,271 (+12.7%) &nbsp;·&nbsp; duration +57.2s (+25%)
+        <strong>Δ +5 条 assertion (+71pp)</strong> &nbsp;·&nbsp; tokens +17,271 (+12.7%) &nbsp;·&nbsp; 时长 +57.2s (+25%)
       </div>
     </div>
 
     <table class="data">
       <colgroup><col style="width:4px"><col style="width:32%"><col style="width:60px"><col style="width:60px"><col></colgroup>
       <thead>
-        <tr><th></th><th>Assertion</th><th>with</th><th>baseline</th><th>Why skill wins</th></tr>
+        <tr><th></th><th>Assertion</th><th>with</th><th>基线</th><th>skill 胜出原因</th></tr>
       </thead>
       <tbody>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td><span class="mono" style="color:var(--ink);">a1</span> &nbsp; UTC window endpoints explicit</td>
+          <td><span class="mono" style="color:var(--ink);">a1</span> &nbsp; UTC 窗口端点显式标注</td>
           <td class="assert-result pass">✅</td><td class="assert-result fail">❌</td>
-          <td style="font-size:14px; color:var(--ink-soft);">Baseline used open-ended <code style="font-family:var(--mono); font-size:12px;">updated:&gt;=</code> filter → 26.1h window → counted out-of-scope PRs #407 #411 #413 #415.</td>
+          <td style="font-size:14px; color:var(--ink-soft);">基线用开区间 <code style="font-family:var(--mono); font-size:12px;">updated:&gt;=</code> filter → 窗口跑成 26.1h → 误纳 #407 #411 #413 #415 这种窗外 PR。</td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td><span class="mono" style="color:var(--ink);">a2</span> &nbsp; <code style="font-family:var(--mono); font-size:12.5px;">gh pr/issue list --search</code> (not gh search)</td>
+          <td><span class="mono" style="color:var(--ink);">a2</span> &nbsp; 用 <code style="font-family:var(--mono); font-size:12.5px;">gh pr/issue list --search</code>（非 gh search）</td>
           <td class="assert-result pass">✅</td><td class="assert-result pass">✅</td>
-          <td style="font-size:14px; color:var(--ink-soft);">Both correct; skill explicitly forbids <code style="font-family:var(--mono); font-size:12px;">gh search prs</code> due to GraphQL EOF flake.</td>
+          <td style="font-size:14px; color:var(--ink-soft);">两边都对；skill 显式禁用 <code style="font-family:var(--mono); font-size:12px;">gh search prs</code>（已知 GraphQL EOF flake）。</td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td><span class="mono" style="color:var(--ink);">a3</span> &nbsp; All 6 buckets present</td>
+          <td><span class="mono" style="color:var(--ink);">a3</span> &nbsp; 六桶全部呈现</td>
           <td class="assert-result pass">✅</td><td class="assert-result fail">❌</td>
-          <td style="font-size:14px; color:var(--ink-soft);">Baseline collapsed into 3-col table; hid 3 superseded PRs (#345 / #375 / #376).</td>
+          <td style="font-size:14px; color:var(--ink-soft);">基线塌成 3 列表，把 3 个被取代的 PR（#345 / #375 / #376）藏掉了。</td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td><span class="mono" style="color:var(--ink);">a4</span> &nbsp; ≥3 themes grouped</td>
+          <td><span class="mono" style="color:var(--ink);">a4</span> &nbsp; ≥3 个主题分组</td>
           <td class="assert-result pass">✅</td><td class="assert-result pass">✅</td>
-          <td style="font-size:14px; color:var(--ink-soft);">Both fine — 9 themes vs 7. Bucket discipline elsewhere already differentiates.</td>
+          <td style="font-size:14px; color:var(--ink-soft);">两边都够 — 9 vs 7。差距体现在桶纪律而非主题数。</td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td><span class="mono" style="color:var(--ink);">a5</span> &nbsp; Still-open with concrete next-step recommendations</td>
+          <td><span class="mono" style="color:var(--ink);">a5</span> &nbsp; 待办带具体下一步建议</td>
           <td class="assert-result pass">✅</td><td class="assert-result fail">❌</td>
-          <td style="font-size:14px; color:var(--ink-soft);">Skill produces per-item driver-dispatchable / <code style="font-family:var(--mono); font-size:12px;">/review PASS</code> recs; baseline only a prose paragraph.</td>
+          <td style="font-size:14px; color:var(--ink-soft);">skill 给每行待办都配 driver 调度 / <code style="font-family:var(--mono); font-size:12px;">/review PASS</code> 之类的建议；基线只写一段散文。</td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td><span class="mono" style="color:var(--ink);">a6</span> &nbsp; Duck voice wrapper</td>
+          <td><span class="mono" style="color:var(--ink);">a6</span> &nbsp; 鸭语口吻包裹</td>
           <td class="assert-result pass">✅</td><td class="assert-result fail">❌</td>
-          <td style="font-size:14px; color:var(--ink-soft);">呷呷~ / 鸭鸭 / ASCII duck / (&gt;ω&lt;) — identity signal for this user.</td>
+          <td style="font-size:14px; color:var(--ink-soft);">呷呷~ / 鸭鸭 / ASCII 鸭子 / (&gt;ω&lt;) —— 用户身份信号。</td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td><span class="mono" style="color:var(--ink);">a7</span> &nbsp; <code style="font-family:var(--mono); font-size:12.5px;">result:</code> line for bg-session contract</td>
+          <td><span class="mono" style="color:var(--ink);">a7</span> &nbsp; <code style="font-family:var(--mono); font-size:12.5px;">result:</code> 行（bg-session 契约）</td>
           <td class="assert-result pass">✅</td><td class="assert-result fail">❌</td>
-          <td style="font-size:14px; color:var(--ink-soft);">Required by the harness background-job state extractor.</td>
+          <td style="font-size:14px; color:var(--ink-soft);">harness 的后台任务状态提取器必读。</td>
         </tr>
       </tbody>
     </table>
@@ -901,13 +910,13 @@
   <section id="f" class="commits">
     <div class="section-head">
       <span class="marker">§ F</span>
-      <h2 class="section-title">PR contents <span class="zh">— commits &amp; files</span></h2>
+      <h2 class="section-title">PR 内容 <span class="en">commits &amp; files</span></h2>
     </div>
 
     <table class="data">
-      <colgroup><col style="width:4px"><col style="width:130px"><col><col style="width:90px"><col style="width:60px"></colgroup>
+      <colgroup><col style="width:4px"><col style="width:130px"><col><col style="width:90px"><col style="width:70px"></colgroup>
       <thead>
-        <tr><th></th><th>Commit</th><th>Subject</th><th>Files</th><th>Lines</th></tr>
+        <tr><th></th><th>Commit</th><th>主题</th><th>文件</th><th>行数</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -928,9 +937,9 @@
     </table>
 
     <div class="files">
-      <div><span class="fpath">.claude/skills/daily-standup/SKILL.md</span> <span class="fnote">— 191 lines · routing matrix + execution steps + theme table + don't-do list</span></div>
-      <div><span class="fpath">.codex/skills/daily-standup/SKILL.md</span> <span class="fnote">— identical mirror per <code style="font-family:var(--mono);">AGENTS.md §5</code></span></div>
-      <div><span class="fpath">.claude/skills/daily-standup/evals/evals.json</span> <span class="fnote">— 7 assertions used to grade § E above</span></div>
+      <div><span class="fpath">.claude/skills/daily-standup/SKILL.md</span> <span class="fnote">— 191 行：路由表 + 执行步骤 + 主题表 + 不要做的事</span></div>
+      <div><span class="fpath">.codex/skills/daily-standup/SKILL.md</span> <span class="fnote">— 同一份镜像（per <code style="font-family:var(--mono);">AGENTS.md §5</code>）</span></div>
+      <div><span class="fpath">.claude/skills/daily-standup/evals/evals.json</span> <span class="fnote">— 7 条 assertion，用来评 § E 那张表</span></div>
     </div>
   </section>
 
@@ -938,37 +947,37 @@
   <section id="g" class="routing">
     <div class="section-head">
       <span class="marker">§ G</span>
-      <h2 class="section-title">Skill routing matrix</h2>
+      <h2 class="section-title">skill 路由表 <span class="en">routing matrix</span></h2>
     </div>
     <p class="lede">
-      The SKILL.md opens with this routing table so the new skill doesn't poach traffic from its neighbors. Adjacent skills already cover related but distinct questions.
+      SKILL.md 顶部就放了这张路由表，避免新 skill 抢邻居 skill 的流量。下面四类问题各自有对应的处理者。
     </p>
 
     <table class="data">
       <colgroup><col style="width:4px"><col style="width:50%"><col></colgroup>
       <thead>
-        <tr><th></th><th>User question</th><th>Skill</th></tr>
+        <tr><th></th><th>用户在问什么</th><th>跑哪个 skill</th></tr>
       </thead>
       <tbody>
         <tr class="this">
           <td class="marker-cell"><span class="bar pass"></span></td>
-          <td><code style="font-family:var(--mono);">"what happened since yesterday"</code> / <code style="font-family:var(--mono);">"since yesterday morning"</code></td>
-          <td><strong><code>daily-standup</code></strong> &nbsp;← this PR &nbsp;<span style="color:var(--muted);">·</span> 24h time-window delta</td>
+          <td><code style="font-family:var(--mono);">"what happened since yesterday"</code> / <code style="font-family:var(--mono);">"昨天到今天"</code></td>
+          <td><strong><code>daily-standup</code></strong> &nbsp;← 本 PR &nbsp;<span style="color:var(--muted);">·</span> 24h 时间窗增量</td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar neutral"></span></td>
-          <td><code style="font-family:var(--mono);">"all open issues"</code> / <code style="font-family:var(--mono);">"issue 全景"</code></td>
-          <td><code>repo-issues-status</code> &nbsp;<span style="color:var(--muted);">·</span> point-in-time census</td>
+          <td><code style="font-family:var(--mono);">"所有 open issue"</code> / <code style="font-family:var(--mono);">"issue 全景"</code></td>
+          <td><code>repo-issues-status</code> &nbsp;<span style="color:var(--muted);">·</span> 当前快照</td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar neutral"></span></td>
           <td><code style="font-family:var(--mono);">"今日开工晨报"</code> / <code style="font-family:var(--mono);">/newday</code></td>
-          <td><code>newday</code> &nbsp;<span style="color:var(--muted);">·</span> worktree + open work, not 24h delta</td>
+          <td><code>newday</code> &nbsp;<span style="color:var(--muted);">·</span> worktree + 开放工作，不限 24h</td>
         </tr>
         <tr>
           <td class="marker-cell"><span class="bar neutral"></span></td>
           <td><code style="font-family:var(--mono);">"#330 怎么样"</code></td>
-          <td><code>gh issue view 330</code> &nbsp;<span style="color:var(--muted);">·</span> single-item lookup, no skill needed</td>
+          <td><code>gh issue view 330</code> &nbsp;<span style="color:var(--muted);">·</span> 单条查询，不用 skill</td>
         </tr>
       </tbody>
     </table>
@@ -978,19 +987,19 @@
   <section id="h">
     <div class="section-head">
       <span class="marker">§ H</span>
-      <h2 class="section-title">Human-merge ask</h2>
+      <h2 class="section-title">请人手 merge <span class="en">human-merge ask</span></h2>
     </div>
 
     <div class="cta">
-      <div class="cta-eyebrow">⚠ &nbsp; agent will <strong>not</strong> press merge</div>
-      <h3>This PR is awaiting a human reviewer to squash-merge by hand.</h3>
+      <div class="cta-eyebrow">⚠ &nbsp; agent 不会按 merge 键</div>
+      <h3>本 PR 等待真人 reviewer 在 GitHub 网页上按 "Squash and merge" 键。</h3>
       <p>
-        Per <a href="https://github.com/libz-renlab-ai/TeamBrain/blob/main/docs/VISUAL-PROOF-PR.md"><code>docs/VISUAL-PROOF-PR.md</code></a> + <a href="https://github.com/libz-renlab-ai/TeamBrain/blob/main/docs/VISUAL-PROOF-HUMAN-MERGE.md"><code>docs/VISUAL-PROOF-HUMAN-MERGE.md</code></a> + project memory <code>feedback_squash_only_merge.md</code>:
+        依据 <a href="https://github.com/libz-renlab-ai/TeamBrain/blob/main/docs/VISUAL-PROOF-PR.md"><code>docs/VISUAL-PROOF-PR.md</code></a> + <a href="https://github.com/libz-renlab-ai/TeamBrain/blob/main/docs/VISUAL-PROOF-HUMAN-MERGE.md"><code>docs/VISUAL-PROOF-HUMAN-MERGE.md</code></a> + 项目记忆 <code>feedback_squash_only_merge.md</code>：
       </p>
       <ul>
-        <li>Agent will <strong>NOT</strong> call <code>gh pr merge</code>.</li>
-        <li>After you have <strong>(1)</strong> run the local <code>/review</code> skill to PASS, and <strong>(2)</strong> verified branch protection per <a href="https://github.com/libz-renlab-ai/TeamBrain/blob/main/docs/BEFORE-MERGE.md"><code>docs/BEFORE-MERGE.md</code></a> (<code>gh api repos/:owner/:repo/branches/main/protection</code>), please click <strong>"Squash and merge"</strong> on <a href="https://github.com/libz-renlab-ai/TeamBrain/pull/416">PR #416</a> in the GitHub web UI.</li>
-        <li><strong>Squash-only.</strong> No merge-commit. No rebase-merge.</li>
+        <li>Agent <strong>不会</strong>调 <code>gh pr merge</code>。</li>
+        <li>请鸭老板（或任意真人 reviewer）<strong>(1)</strong> 跑本地 <code>/review</code> skill 直到 PASS，<strong>(2)</strong> 按 <a href="https://github.com/libz-renlab-ai/TeamBrain/blob/main/docs/BEFORE-MERGE.md"><code>docs/BEFORE-MERGE.md</code></a> 验证 main 分支保护（<code>gh api repos/:owner/:repo/branches/main/protection</code>），然后到 GitHub 网页上对 <a href="https://github.com/libz-renlab-ai/TeamBrain/pull/416">PR #416</a> 点击 <strong>"Squash and merge"</strong>。</li>
+        <li><strong>只走 squash-merge。</strong> 不要 merge-commit，不要 rebase-merge。</li>
       </ul>
     </div>
   </section>
@@ -999,16 +1008,16 @@
   <footer>
     <div class="footer-badges">
       <span class="badge-text">PR <span class="num">#416</span></span>
-      <span class="badge-text">branch <span class="num">worktree-daily-standup-skill</span></span>
+      <span class="badge-text">分支 <span class="num">worktree-daily-standup-skill</span></span>
       <span class="badge-text">commits <span class="num">2</span></span>
-      <span class="badge-text">files <span class="num">3</span></span>
+      <span class="badge-text">文件 <span class="num">3</span></span>
       <span class="badge-text">diff <span class="num" style="color:var(--pass);">+402</span>&nbsp;/&nbsp;<span class="num" style="color:var(--fail);">−0</span></span>
     </div>
     <p>
-      Built <span class="num" style="color:var(--ink-soft);">2026-05-13 Beijing</span> from session bg-job <code style="font-family:var(--mono);">510f39df</code>. Hosted on the PR proposer's own self-hosted GitHub Pages at <a href="https://liushiyumath.github.io/teambrain-proof/pr-416/visual-proof.html">liushiyumath.github.io/teambrain-proof/pr-416/visual-proof.html</a> per <a href="https://github.com/libz-renlab-ai/TeamBrain/blob/main/docs/VISUAL-PROOF-FORMAT.md"><code>docs/VISUAL-PROOF-FORMAT.md § Hosting</code></a> fallback path.
+      构建于 <span class="num" style="color:var(--ink-soft);">2026-05-13 北京</span>，后台任务 <code style="font-family:var(--mono);">510f39df</code> 产出。托管在 PR proposer 自己的 self-hosted GitHub Pages：<a href="https://liushiyumath.github.io/teambrain-proof/pr-416/visual-proof.html">liushiyumath.github.io/teambrain-proof/pr-416/visual-proof.html</a>，对应 <a href="https://github.com/libz-renlab-ai/TeamBrain/blob/main/docs/VISUAL-PROOF-FORMAT.md"><code>docs/VISUAL-PROOF-FORMAT.md § Hosting</code></a> 的 fallback 路径。
     </p>
     <p>
-      This page is self-contained: inline CSS, no CDN, no JS framework, system font stack only. A duplicate Gist + htmlpreview version of the visual proof is also available at <a href="https://gist.github.com/LiuShiyuMath/10a7565e8cd913b1bd71736f6830ef50">gist.github.com/LiuShiyuMath/10a7565e8cd913b1bd71736f6830ef50</a> &mdash; that copy used the canonical-default hosting path but rendered with degraded fidelity through the htmlpreview proxy, which is why this self-hosted version exists.
+      本页 self-contained：内联 CSS，零 CDN，零 JS 框架，仅使用系统字体栈。另有一份 Gist + htmlpreview 版作为存档：<a href="https://gist.github.com/LiuShiyuMath/10a7565e8cd913b1bd71736f6830ef50">gist.github.com/LiuShiyuMath/10a7565e8cd913b1bd71736f6830ef50</a> —— 那份用的是 canonical 默认托管，但 htmlpreview 代理渲染保真度退化，所以另起这份 self-hosted 版本。
     </p>
     <div class="duck" aria-hidden="true">       __
    &lt;(o )___    呷呷~ PR #416 视觉证据已就位，等鸭老板按 merge 键
