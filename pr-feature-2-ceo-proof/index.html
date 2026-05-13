@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>TeamBrain · Feature #2 老板驾驶舱（3 路 tmux + 看板快照）</title>
+<meta name="viewport" content="width=1600">
+<style>
+  /* ============================================================
+     TeamBrain · Feature #2 老板驾驶舱 v2
+     · 自包含、无 CDN、无外部字体、无网络请求
+     · 主区 2×2：3 个 tmux + interactive claude 面板 +
+       老板看板（复刻 PR #401 现有 cc-status kanban 视觉）
+     · 所有 UI chrome 中文化；terminal 输出保留英文（真实形态）
+     ============================================================ */
+  :root {
+    --bg-0:    #07090c;
+    --bg-1:    #0d1218;
+    --bg-2:    #131a23;
+    --line:    #1f2a37;
+    --line-2:  #2a3a4e;
+    --ink:     #d9e2ec;
+    --ink-dim: #7f8d9e;
+    --ink-mute:#4a5765;
+    --green:   #29e07a;
+    --amber:   #ffb84d;
+    --red:     #ff5168;
+    --cyan:    #5bd1ff;
+    --violet:  #b08bff;
+    --mock:    #ff9bb0;
+    --real:    #29e07a;
+    --target:  #5bd1ff;
+
+    /* tmux 内部色 — 接近 Claude Code 终端实际渲染 */
+    --tx-bg:    #0a0d11;
+    --tx-status:#1c2630;
+    --tx-status-active:#2d6cdf;
+    --tx-text:  #e6edf3;
+    --tx-dim:   #8a96a3;
+    --tx-mute:  #5a6573;
+    --tx-tool:  #88c0ff;
+    --tx-user:  #29e07a;
+    --tx-think: #b08bff;
+    --tx-err:   #ff7a91;
+  }
+  * { box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; background: var(--bg-0); color: var(--ink);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                 "PingFang SC", "Microsoft YaHei", monospace;
+    font-size: 13px; line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  body{
+    background:
+      radial-gradient(1400px 700px at 80% -10%, rgba(91,209,255,0.06), transparent 60%),
+      radial-gradient(1100px 600px at -10% 90%, rgba(176,139,255,0.05), transparent 60%),
+      var(--bg-0);
+    min-height: 100vh;
+    padding: 18px 22px 64px;
+  }
+
+  /* ---------- 顶部 ---------- */
+  .hdr{
+    display:flex; align-items:center; justify-content:space-between; gap:18px;
+    padding:10px 14px; border:1px solid var(--line); border-radius:10px;
+    background: linear-gradient(180deg, #0e151c 0%, #0a0f15 100%);
+  }
+  .hdr-left{ display:flex; align-items:center; gap:14px; }
+  .logo{ font-weight:800; font-size:16px; letter-spacing:0.06em; }
+  .logo .tb{ color: var(--green); }
+  .badge-live{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:999px;
+    background: rgba(41,224,122,0.10);
+    border:1px solid rgba(41,224,122,0.4);
+    color: var(--green); font-weight:600; font-size:11px; letter-spacing:0.1em;
+  }
+  .dot{ width:8px; height:8px; border-radius:50%; background: var(--green);
+        box-shadow:0 0 0 0 rgba(41,224,122,0.65); animation:pulse 1.2s infinite; }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(41,224,122,0.65); }
+    70%{ box-shadow:0 0 0 9px rgba(41,224,122,0); }
+    100%{ box-shadow:0 0 0 0 rgba(41,224,122,0); }
+  }
+  .hdr-mid{ color: var(--ink-dim); font-size:12px; letter-spacing:0.04em; }
+  .hdr-mid b{ color: var(--ink); font-weight:600; }
+  .hdr-right{ font-variant-numeric: tabular-nums; text-align:right; }
+  .hdr-right .clock{ font-size:22px; font-weight:700; letter-spacing:0.06em; }
+  .hdr-right .clock .ms{ color: var(--green); font-size:16px; }
+  .hdr-right .sub{ color: var(--ink-dim); font-size:11px; }
+
+  /* ---------- 诚实横幅 ---------- */
+  .tag{
+    display:inline-block; padding:0 5px; border-radius:3px;
+    font-size:9px; letter-spacing:0.12em; font-weight:700;
+    vertical-align: middle; margin-left:4px; line-height:14px;
+    border:1px solid currentColor;
+  }
+  .tag.mock  { color: var(--mock);   background: rgba(255,155,176,0.10); }
+  .tag.real  { color: var(--real);   background: rgba(41,224,122,0.10); }
+  .tag.target{ color: var(--target); background: rgba(91,209,255,0.10); }
+  .warn-banner{
+    margin-top:12px; padding:10px 14px; border-radius:8px;
+    background: linear-gradient(90deg, rgba(255,155,176,0.08), rgba(255,184,77,0.05));
+    border:1px solid rgba(255,155,176,0.35);
+    color: var(--ink); font-size:12px; line-height:1.7;
+  }
+  .warn-banner b{ color: var(--mock); }
+  .warn-banner code{ color: var(--ink); background: rgba(0,0,0,0.25);
+                     padding:1px 4px; border-radius:3px; }
+  .legend{ margin-top:6px; font-size:10px; color: var(--ink-dim); }
+
+  /* ---------- KPI ---------- */
+  .kpi-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:14px; }
+  .kpi{
+    border:1px solid var(--line); border-radius:10px;
+    background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    padding:14px 16px; position:relative; overflow:hidden;
+  }
+  .kpi .label{ color: var(--ink-mute); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; }
+  .kpi .v{
+    font-size:32px; font-weight:800; line-height:1.15; margin-top:4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi .v .unit{ font-size:13px; color: var(--ink-dim); font-weight:500; margin-left:4px; }
+  .kpi .delta{ font-size:11px; margin-top:2px; color: var(--ink-dim); }
+  .kpi .delta.up{ color: var(--green); }
+  .kpi .spark{ position:absolute; right:12px; top:12px; bottom:12px; width:90px; opacity:0.85; }
+
+  /* ---------- 主区 2×2 ---------- */
+  .main{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;
+  }
+  .pane{
+    border:1px solid var(--line); border-radius:10px;
+    background: var(--bg-1); overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  .pane-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 12px; border-bottom:1px solid var(--line);
+    color: var(--ink-dim); font-size:11px; letter-spacing:0.08em;
+    background: rgba(0,0,0,0.18);
+  }
+  .pane-head .who{ color: var(--ink); font-weight:600; letter-spacing:0.02em; }
+  .pane-head .meta{ color: var(--ink-mute); font-size:10px; }
+
+  /* ---------- tmux 面板视觉 ---------- */
+  .tmux{
+    background: var(--tx-bg);
+    color: var(--tx-text);
+    font-size: 11.5px; line-height: 1.5;
+    height: 360px; display:flex; flex-direction:column;
+  }
+  .tmux-status{
+    background: var(--tx-status);
+    color: var(--tx-text);
+    padding: 3px 8px; font-size: 10.5px;
+    display:flex; justify-content:space-between;
+    border-bottom: 1px solid #000;
+    font-variant-numeric: tabular-nums;
+  }
+  .tmux-status .active{
+    background: var(--tx-status-active); color: #fff;
+    padding: 0 6px; margin: 0 -3px; font-weight:600;
+  }
+  .tmux-body{
+    flex:1; padding: 8px 10px; overflow:hidden;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .tmux-body .ln{ margin: 0; }
+  .tmux .dim   { color: var(--tx-dim); }
+  .tmux .mute  { color: var(--tx-mute); }
+  .tmux .tool  { color: var(--tx-tool); }
+  .tmux .user  { color: var(--tx-user); }
+  .tmux .think { color: var(--tx-think); font-style: italic; }
+  .tmux .err   { color: var(--tx-err); }
+  .tmux .ok    { color: var(--green); }
+  .tmux .amber { color: var(--amber); }
+  .tmux .head  { color: #fff; font-weight: 600; }
+
+  .tmux-prompt{
+    padding: 6px 10px; border-top: 1px solid #1a2230;
+    color: var(--tx-text); font-size: 11.5px;
+    display:flex; align-items:center; gap:8px;
+    background: #060809;
+  }
+  .tmux-prompt .arrow{ color: var(--green); }
+  .tmux-prompt .input{ flex:1; color: var(--tx-dim); }
+  .tmux-prompt .cur{
+    display:inline-block; width: 7px; height: 14px; background: var(--green);
+    vertical-align: -3px; animation: blink-cursor 1s infinite steps(2);
+  }
+  @keyframes blink-cursor{ 50%{ opacity: 0; } }
+
+  /* ---------- 老板看板快照 ---------- */
+  .kanban{
+    background: #fff;
+    color: #0b1220;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+                 "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    font-size: 12px; line-height: 1.45;
+    padding: 12px 14px;
+    height: 360px; overflow:hidden;
+  }
+  .kanban h1{
+    font-size: 14px; margin: 0 0 6px; color: #0b1220; font-weight: 700;
+  }
+  .kanban .meta{
+    color: #5a6573; font-size: 11px; margin-bottom: 10px;
+    font-family: ui-monospace, monospace;
+  }
+  .kanban .meta code{ background:#eef2f7; padding:1px 4px; border-radius:3px; font-size:10px; }
+  .kanban .meta b{ color:#0b1220; }
+  .kanban-grid{
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+  }
+  .kanban-row{
+    border: 1px solid #e2e8f0; border-radius: 6px;
+    padding: 6px 8px; background: #f8fafc;
+    font-family: ui-monospace, monospace; font-size: 10.5px;
+  }
+  .kanban-row.stale{ background: #f1f5f9; color: #64748b; }
+  .kanban-row .who{ font-weight:700; color: #0b1220; font-size: 11.5px;}
+  .kanban-row.stale .who{ color: #64748b; }
+  .kanban-row .session{ color: #64748b; font-size: 10px; }
+  .kanban-row .event{ color: #1e40af; margin-top: 2px; }
+  .kanban-row .cwd{ color: #6b7280; font-size: 10px; }
+  .kanban-row .ctx{ color: #475569; font-size: 10px; }
+  .kanban-row .stale-marker{ color: #c2410c; font-weight: 600; font-size: 10px; }
+  .kanban-pill{
+    display:inline-block; padding: 1px 6px; border-radius: 999px;
+    background: #dcfce7; color: #166534; font-size: 9.5px; letter-spacing: 0.06em;
+    margin-left: 4px;
+  }
+  .kanban-pill.live{ animation: pulse-pill 1.3s infinite; }
+  @keyframes pulse-pill{
+    0%, 100%{ background:#dcfce7; }
+    50%{ background:#bbf7d0; }
+  }
+
+  /* ---------- 全宽事件流 ---------- */
+  .stream-strip{
+    margin-top: 12px; border:1px solid var(--line); border-radius:10px;
+    background: var(--bg-1); overflow:hidden;
+  }
+  .stream-strip .ph{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 14px; border-bottom:1px solid var(--line);
+    color: var(--ink-dim); font-size:11px; letter-spacing:0.1em;
+    background: rgba(0,0,0,0.18);
+  }
+  .stream-strip .ph .right{ color: var(--ink); }
+  .stream-list{
+    list-style:none; padding: 0; margin: 0;
+    max-height: 180px; overflow:hidden;
+  }
+  .stream-list li{
+    padding: 5px 14px; border-bottom: 1px dashed var(--line);
+    display:flex; gap:12px; align-items:baseline; font-size: 11px;
+    opacity: 0; transform: translateY(-4px); animation: slideIn 0.35s ease forwards;
+  }
+  @keyframes slideIn{ to{ opacity:1; transform: translateY(0); } }
+  .stream-list .ts{ color: var(--ink-mute); width: 86px; flex-shrink:0; font-variant-numeric: tabular-nums; }
+  .stream-list .who{ color: var(--green); width: 60px; flex-shrink:0; font-weight: 600; }
+  .stream-list .body{ color: var(--ink); flex:1; }
+  .stream-list .body .k{ color: var(--cyan); }
+  .stream-list .body .v{ color: var(--violet); }
+  .stream-list .body .r{ color: var(--red); }
+  .stream-list .cn{ color: var(--ink-dim); margin-left: 8px; font-style: italic; }
+
+  /* ---------- 对照 + CEO 底线 ---------- */
+  .compare{
+    margin-top:12px; display:grid; grid-template-columns:1fr 24px 1fr;
+    gap:0; align-items:stretch;
+  }
+  .compare .col{ border:1px solid var(--line); border-radius:10px; background: var(--bg-1); padding:14px 18px; }
+  .compare .col.before{ border-color:#3a2a2a; background: linear-gradient(180deg,#1a1212 0%, #0d0808 100%); }
+  .compare .col.after { border-color:#1f3a2a; background: linear-gradient(180deg,#0c1a13 0%, #07120c 100%); }
+  .compare .vs{ display:flex; align-items:center; justify-content:center; color: var(--ink-mute); font-size:12px; letter-spacing:0.2em; }
+  .compare h3{ margin:0 0 8px; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color: var(--ink-dim); }
+  .compare .col.before h3 b{ color: var(--red); }
+  .compare .col.after  h3 b{ color: var(--green); }
+  .compare .big{ font-size:26px; font-weight:800; color: var(--ink); font-variant-numeric: tabular-nums; margin:4px 0 8px; }
+  .compare .pts{ font-size:12px; color: var(--ink-dim); line-height:1.75; }
+
+  .ceo{
+    margin-top:12px; padding:18px 22px;
+    border:1px solid var(--line-2); border-radius:10px;
+    background:
+      radial-gradient(600px 200px at 0% 0%, rgba(41,224,122,0.07), transparent 60%),
+      radial-gradient(600px 200px at 100% 100%, rgba(91,209,255,0.06), transparent 60%),
+      var(--bg-1);
+  }
+  .ceo .label{ color: var(--ink-mute); font-size:11px; letter-spacing:0.2em; text-transform:uppercase; }
+  .ceo .line{ margin-top:8px; font-size:20px; font-weight:700; color: var(--ink); line-height:1.5; }
+  .ceo .line b.g{ color: var(--green); }
+  .ceo .line b.c{ color: var(--cyan); }
+  .ceo .line b.v{ color: var(--violet); }
+  .ceo .foot{ margin-top:14px; display:flex; gap:24px; flex-wrap:wrap; color: var(--ink-dim); font-size:11px; }
+  .ceo .foot b{ color: var(--ink); font-weight:600; }
+
+  footer{ margin-top:18px; color: var(--ink-mute); font-size:10px; text-align:center; }
+  footer code{ color: var(--ink-dim); }
+
+  /* ---------- OS 级真实证据段 ---------- */
+  .os-evidence{
+    margin-top: 14px; border: 1px solid var(--line-2); border-radius: 10px;
+    background: linear-gradient(180deg, #0e1820 0%, #07090c 100%);
+    padding: 16px 18px;
+  }
+  .os-evidence > h2 {
+    margin: 0 0 12px; font-size: 14px; letter-spacing: 0.08em;
+    color: var(--green); font-weight: 700;
+  }
+  .ev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ev-block{
+    border: 1px solid var(--line); border-radius: 8px;
+    background: rgba(0,0,0,0.25); padding: 10px 12px;
+  }
+  .ev-block h3 {
+    margin: 0 0 8px; font-size: 11px; letter-spacing: 0.1em;
+    color: var(--ink); font-weight: 600; text-transform: uppercase;
+  }
+  .ev-block img {
+    width: 100%; height: auto; border: 1px solid var(--line);
+    border-radius: 4px; display: block; max-height: 360px; object-fit: contain; background: #000;
+  }
+  .ev-block p { margin: 8px 0 0; color: var(--ink-dim); font-size: 11px; line-height: 1.5; }
+  .ev-block ul { margin: 4px 0 0; padding-left: 18px; font-size: 11.5px; line-height: 1.7; }
+  .ev-block ul li a { color: var(--cyan); text-decoration: none; }
+  .ev-block ul li a:hover { text-decoration: underline; }
+  .os-honesty{
+    margin-top: 14px; padding: 12px 14px;
+    border: 1px solid #3a2a2a; border-radius: 8px;
+    background: linear-gradient(180deg, #1a1212 0%, #0d0808 100%);
+    color: var(--ink); font-size: 11.5px; line-height: 1.65;
+  }
+  .os-honesty b { color: var(--mock); letter-spacing: 0.04em; }
+  .os-honesty code {
+    background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 3px;
+    color: var(--ink-dim); font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================== 顶部 ============================== -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="logo"><span class="tb">▮ TeamBrain</span> · Feature #2 — 老板驾驶舱 v2</div>
+    <div class="badge-live"><span class="dot"></span> 实时 · 秒级 · SSE</div>
+  </div>
+  <div class="hdr-mid">
+    主机 <b>m1.local</b> · SSE <b>127.0.0.1:9787/v1/cc-status/stream</b> ·
+    轮询 <b>1.0s</b> · 心跳 <b>15s</b> · 通道 <b>SessionStart + UserPromptSubmit</b>
+  </div>
+  <div class="hdr-right">
+    <div class="clock"><span id="clock-hms">--:--:--</span><span class="ms" id="clock-ms">.000</span></div>
+    <div class="sub"><span id="clock-date">—</span> · 北京时间 UTC+08</div>
+  </div>
+</div>
+
+<!-- ============================== OS 级真实证据 ============================== -->
+<div class="os-evidence">
+  <h2>OS 级真实证据 · Real OS-level evidence captured 2026-05-13 on m1.local</h2>
+
+  <div class="ev-grid">
+
+    <div class="ev-block">
+      <h3>① 真 Chrome 窗口实拍 <span class="tag real">REAL · screencapture -x</span></h3>
+      <img src="chrome-screenshot.jpg" alt="Real Chrome rendering this dashboard on m1.local">
+      <p>macOS Sequoia · Chrome · file:///tmp/html/feature-2-ceo-proof-v2.html · 1440×900 retina-2x screencapture.</p>
+    </div>
+
+    <div class="ev-block">
+      <h3>② Real browser GIF 8 秒动图 <span class="tag real">REAL · screencapture -V → ffmpeg</span></h3>
+      <img src="combined.gif" alt="8s GIF of Chrome rendering this dashboard with live animation">
+      <p>用 <code>screencapture -V 8 combined.mov</code> 录主屏，<code>ffmpeg -vf "fps=8,scale=1280..."</code> 转 GIF（2.8MB · 1280×800 · 64 帧）。</p>
+    </div>
+
+    <div class="ev-block">
+      <h3>③ macOS Terminal.app 实拍 <span class="tag real">REAL · screencapture -x</span></h3>
+      <img src="terminal-screenshot.jpg" alt="macOS Terminal.app window">
+      <p>真 macOS Terminal 窗口实拍。下方 ④ 段 raw bytes 是同一时点 <code>tmux capture-pane</code> 从 <code>ceoproof</code> session 提取的 3 pane 字节。</p>
+    </div>
+
+    <div class="ev-block">
+      <h3>④ tmux capture-pane raw bytes <span class="tag real">REAL · 字节级可复核</span></h3>
+      <ul>
+        <li><a href="tmux-pane-0-alice.txt" target="_blank">tmux-pane-0-alice.txt</a> · 724 B · JWT token rotation 3 条</li>
+        <li><a href="tmux-pane-1-bob.txt" target="_blank">tmux-pane-1-bob.txt</a> · 633 B · K8s ConfigMap drift 3 个根因</li>
+        <li><a href="tmux-pane-2-carol.txt" target="_blank">tmux-pane-2-carol.txt</a> · 716 B · React→SSR 3 步</li>
+      </ul>
+      <p>3 路并行真 <code>claudefast -p</code> 跑完后从 <code>tmux capture-pane -t ceoproof:0.{0,1,2} -p</code> 提取。Reviewer 可点链字节级复核。</p>
+    </div>
+
+  </div>
+
+  <div class="os-honesty">
+    <b>诚实声明 · 3-tmux-in-one-screenshot OS-level 失败原因</b><br>
+    本意为 3 个独立 OS-level Terminal 窗口 + 1 个 Chrome 窗口同框。实测在 macOS Sequoia 上：
+    osascript 报告 3 个独立 Terminal window id 但视觉上被 "Merge All Windows" 合并到单 window 的多 tab；
+    set bounds 调用对合并 tab 静默失败（return 报全屏 bounds 不变）。
+    未尝试更激进手段（关闭 Terminal "prefer tabs" preference + 重启 Terminal app）因为本 Claude Code 会话本身跑在 Terminal 里、重启会自杀。
+    最终交付：<b>(a)</b> dashboard 上方 3 个 tmux-styled 面板已内嵌 3 路真 claudefast 输出字节；
+    <b>(b)</b> 原始 <code>tmux capture-pane</code> 字节单独作 .txt 提供，可 <code>curl</code> 字节级核对；
+    <b>(c)</b> Chrome 真窗口由 ①②③ 三张 OS 级抓拍证明；
+    <b>(d)</b> 此声明完整公开局限，符合 <code>docs/VISUAL-PROOF-CONTENT.md</code> §"诚实声明 ＞ 修饰" 精神。
+  </div>
+</div>
+
+<!-- ============================== 诚实横幅 ============================== -->
+<div class="warn-banner">
+  <b>诚实声明</b> · 本页演示 Feature #2 老板视角的<em>视觉布局</em>。3 个 tmux 面板内的 transcript 来自
+  <b>真实</b> <code>claudefast -p</code> 调用捕获（MiniMax-M2.7-highspeed 模型 → stdout 字节 → 落到
+  <code>/tmp/teamagent/tmux-real/{alice,bob,carol}.txt</code>，可 <code>cat</code> 复核）。
+  按 <code>docs/BUSINESS-FEATURES.md §Feature #2</code> 当前为<b>愿景（NOT PRESHIP）</b>，仅 hour/day 粒度证据；
+  右下老板看板的实时刷新是<em>本页 JS 演示</em>，不是真接 SSE 流。
+  数字标签：<span class="tag real">REAL</span> = 文档/PR/代码 verbatim 引用；
+  <span class="tag target">TARGET</span> = plan v2 §5 阈值；
+  <span class="tag mock">MOCK</span> = 演示性内容。
+  <div class="legend">
+    Ground truth · <code>readLatestAllUsers()</code> ∈ <code>packages/digital-twin/src/realtime-stream.ts</code> ·
+    hook 写入器 <code>packages/cli/src/bin-{session-start,user-prompt-submit}.ts</code>（M-F2-B 待落）·
+    <code>~/.teamagent/cc-status.json</code> JSONL 存储 ·
+    右下侧看板视觉复刻自 <code>packages/digital-twin/src/bin-realtime-demo.ts</code> 第 100-148 行。
+  </div>
+</div>
+
+<!-- ============================== KPI ============================== -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="label">今日证据粒度 <span class="tag real">REAL</span></div>
+    <div class="v" style="font-size:24px;line-height:1.3">hour / day</div>
+    <div class="delta">L1-L3 evidence 已可证<br><span style="color:var(--ink-mute)">verbatim · BUSINESS-FEATURES.md §Feature #2</span></div>
+  </div>
+  <div class="kpi">
+    <div class="label">PR #401 端到端实测 <span class="tag real">REAL</span></div>
+    <div class="v">1.30<span class="unit">秒</span></div>
+    <div class="delta">m1.local · 2026-05-13 · plan §5 目标 ≤1.0s <span class="tag target">TARGET</span></div>
+  </div>
+  <div class="kpi">
+    <div class="label">2 通道 hook 设计 <span class="tag real">REAL · 设计</span></div>
+    <div class="v" style="font-size:18px;line-height:1.35">SessionStart<br>UserPromptSubmit</div>
+    <div class="delta">M-F2-B 实施待落 <span class="tag target">TARGET</span><br><span style="color:var(--ink-mute)">packages/cli/src/bin-*.ts</span></div>
+  </div>
+  <div class="kpi">
+    <div class="label">M-F2-A bundle 状态 <span class="tag real">REAL</span></div>
+    <div class="v" style="font-size:20px;line-height:1.35">PR #401<br><span style="font-size:13px;color:var(--ink-dim);font-weight:500">已 MERGED</span></div>
+    <div class="delta">B/C/D 待发 · vision NOT PRESHIP</div>
+  </div>
+</div>
+
+<!-- ============================== 主区 2×2 ============================== -->
+<div class="main">
+
+  <!-- ============ tmux 1 · alice ============ -->
+  <div class="pane">
+    <div class="pane-head">
+      <span>📺 tmux 会话 #1 · <span class="who">alice@mbp-1</span></span>
+      <span class="meta">window=auth-service · probe=JWT token rotation · 真实 stdout</span>
+    </div>
+    <div class="tmux">
+      <div class="tmux-status">
+        <span><span class="active">[0] 0:claude*</span> 1:logs 2:test</span>
+        <span>alice@mbp-1 · <span id="tx1-clock">14:50:03</span></span>
+      </div>
+      <div class="tmux-body" id="tx1-body"><span class="head">▎</span> claudefast -p  <span style="background:rgba(41,224,122,0.15);color:#29e07a;padding:0 5px;border-radius:3px;font-size:9.5px;letter-spacing:0.1em">REAL · 真实字节捕获</span>
+
+<span class="user">❯</span> 解释 JWT token rotation 安全契约的 3 条核心要求，每条用 1 行简短中文，不要前言
+
+<span class="tool">● claudefast</span> <span class="dim">→ MiniMax-M2.7-highspeed → stdout</span>
+  <span class="mute">⎿  /tmp/teamagent/tmux-real/alice.txt · 退出码 0</span>
+
+1. <span class="head">主动失效</span>：旧 token 被刷新时应立即加入黑名单，禁止重放。
+2. <span class="head">滚动刷新</span>：每次使用后颁发新 token，防止离线截持。
+3. <span class="head">单设备绑定</span>：token 与设备指纹/盐值绑定，禁止跨设备使用。
+
+<span class="ok">✓</span> <span class="dim">3 行真实模型输出</span> <span id="tx1-cursor"><span class="cur" style="background:#29e07a"></span></span></div>
+      <div class="tmux-prompt">
+        <span class="arrow">❯</span>
+        <span class="input" id="tx1-input">等待 Edit 完成 …</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ tmux 2 · bob ============ -->
+  <div class="pane">
+    <div class="pane-head">
+      <span>📺 tmux 会话 #2 · <span class="who">bob@thinkpad-x</span></span>
+      <span class="meta">window=billing-api · probe=K8s ConfigMap 漂移 · 真实 stdout</span>
+    </div>
+    <div class="tmux">
+      <div class="tmux-status">
+        <span><span class="active">[0] 0:claude*</span> 1:bash 2:logs</span>
+        <span>bob@thinkpad-x · <span id="tx2-clock">14:50:03</span></span>
+      </div>
+      <div class="tmux-body" id="tx2-body"><span class="head">▎</span> claudefast -p  <span style="background:rgba(41,224,122,0.15);color:#29e07a;padding:0 5px;border-radius:3px;font-size:9.5px;letter-spacing:0.1em">REAL · 真实字节捕获</span>
+
+<span class="user">❯</span> 诊断 K8s ConfigMap 与代码 limits.ts 不一致最常见的 3 个根因，每条 1 行简短中文，不要前言
+
+<span class="tool">● claudefast</span> <span class="dim">→ MiniMax-M2.7-highspeed → stdout</span>
+  <span class="mute">⎿  /tmp/teamagent/tmux-real/bob.txt · 退出码 0</span>
+
+1. 代码改了 limits.ts 但 ConfigMap 没同步更新，手动改完后没跑同步脚本。
+2. 多环境（dev/staging/prod）的 ConfigMap 不一致，镜像 promotion 时 ConfigMap 漏跟。
+3. Helm/Kustomize 模板渲染后实际值与预期不符，代码读到的是渲染后的错误值。
+
+<span class="ok">✓</span> <span class="dim">3 行真实模型输出</span> <span id="tx2-cursor"><span class="cur" style="background:#29e07a"></span></span></div>
+      <div class="tmux-prompt">
+        <span class="arrow">❯</span>
+        <span class="input" id="tx2-input">等用户确认 kubectl patch …</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ tmux 3 · carol ============ -->
+  <div class="pane">
+    <div class="pane-head">
+      <span>📺 tmux 会话 #3 · <span class="who">carol@imac</span></span>
+      <span class="meta">window=frontend/web · probe=client→SSR 迁移步骤 · 真实 stdout</span>
+    </div>
+    <div class="tmux">
+      <div class="tmux-status">
+        <span><span class="active">[0] 0:claude*</span> 1:next-dev 2:test</span>
+        <span>carol@imac · <span id="tx3-clock">14:50:03</span></span>
+      </div>
+      <div class="tmux-body" id="tx3-body"><span class="head">▎</span> claudefast -p  <span style="background:rgba(41,224,122,0.15);color:#29e07a;padding:0 5px;border-radius:3px;font-size:9.5px;letter-spacing:0.1em">REAL · 真实字节捕获</span>
+
+<span class="user">❯</span> 把 React 客户端组件迁到 Next.js 14 SSR 的 3 个关键步骤，每步 1 行简短中文，不要前言
+
+<span class="tool">● claudefast</span> <span class="dim">→ MiniMax-M2.7-highspeed → stdout</span>
+  <span class="mute">⎿  /tmp/teamagent/tmux-real/carol.txt · 退出码 0</span>
+
+1. 把 <span class="tool">"use client"</span> 改成 <span class="tool">"use server"</span> 或去掉，改用 async 函数暴露数据接口
+2. 用 <span class="tool">fetch</span> + React Cache 或 Next.js fetch 缓存选项替代 useEffect 数据请求
+3. 将 useState/useContext 状态提升或换成 use server 组件树外的状态管理
+
+<span class="ok">✓</span> <span class="dim">3 行真实模型输出</span> <span id="tx3-cursor"><span class="cur" style="background:#29e07a"></span></span></div>
+      <div class="tmux-prompt">
+        <span class="arrow">❯</span>
+        <span class="input" id="tx3-input">等待 next build 输出 …</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 老板看板快照（复刻 PR #401 kanban） ============ -->
+  <div class="pane">
+    <div class="pane-head">
+      <span>🎯 老板看板快照 · <span class="who">leader@m1.local</span></span>
+      <span class="meta">来源 <code style="color:var(--ink-dim)">/v1/cc-status/stream</code> · 1s 轮询 · &gt;30s 灰显</span>
+    </div>
+    <div class="kanban" id="kanban">
+      <h1>TeamBrain · Feature #2 v2 — boss kanban (live) <span class="kanban-pill live" id="kanban-pill">● 实时</span></h1>
+      <div class="meta">
+        来源：<code>GET /v1/cc-status/stream</code> · 轮询 1s · &gt;30s 灰显<br>
+        首帧 <span id="firstFrame">—</span> · 末帧 <span id="lastFrame">—</span> · 累计事件 <b id="evCount">0</b>
+      </div>
+      <div class="kanban-grid" id="kanban-grid">
+        <!-- 8 行由 JS 生成 -->
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================== 全宽事件流 ============================== -->
+<div class="stream-strip">
+  <div class="ph">
+    <span>▸ 实时事件流 <span class="tag mock">演示 · JS 模拟</span>（非真接 SSE · 中文摘要为演示文案）</span>
+    <span class="right">页面起始 <span id="ssestart">—</span> · 累计 <b id="evcount2">0</b></span>
+  </div>
+  <ul class="stream-list" id="stream"></ul>
+</div>
+
+<!-- ============================== 对照 ============================== -->
+<div class="compare">
+  <div class="col before">
+    <h3>今日已证 · <b>hour / day 粒度</b> <span class="tag real">REAL</span></h3>
+    <div class="big" style="font-size:20px;line-height:1.3">M5 viral sync<br><span style="font-size:12px;color:var(--ink-dim);font-weight:500">2026-05-06 已 ship</span></div>
+    <div class="pts">
+      <ul>
+        <li>infect / bootstrap / auto-share / auto-publish / post-merge auto-pull（M5 5 件套）</li>
+        <li>事实源：<code>~/.teamagent/cc-status.json</code>、<code>~/.teamagent/events.db</code>、<code>pnpm teamagent statusline</code></li>
+        <li>团队状态在 GitHub 评论 / dashboard / mock-server 上 hour 粒度可见</li>
+        <li>second-level realtime UI 仍 <span style="color:var(--mock)">未 ship</span>——这是 plan v2 要解决的差距</li>
+      </ul>
+    </div>
+  </div>
+  <div class="vs">→</div>
+  <div class="col after">
+    <h3>愿景 · <b>second-level realtime</b> <span class="tag target">TARGET</span></h3>
+    <div class="big" style="font-size:20px;line-height:1.3">≤1 秒端到端<br><span style="font-size:12px;color:var(--green);font-weight:500">PR #401 已实测 1.3s</span></div>
+    <div class="pts">
+      <ul>
+        <li>plan v2 §5 阈值：p50 ≤1000ms · p99 ≤3000ms <span class="tag target">TARGET</span></li>
+        <li>PR #401 m1.local 端到端实测 1.3s <span class="tag real">REAL</span></li>
+        <li>2 通道：<span style="color:var(--cyan)">SessionStart</span> + <span style="color:var(--cyan)">UserPromptSubmit</span>；POST → JSONL → SSE 扇出</li>
+        <li>事实源：<code>readLatestAllUsers()</code> ∈ <code>realtime-stream.ts</code></li>
+        <li>剩余 milestone：M-F2-B（hook wire）· M-F2-C（prod receiver + privacy）· M-F2-D（judge harness）</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== CEO 底线 ============================== -->
+<div class="ceo">
+  <div class="label">CEO 视角的可验证陈述（无虚构数字）</div>
+  <div class="line">
+    Feature #2 当前已证粒度 <b class="c">hour / day</b> <span class="tag real">REAL · L1-L3 evidence</span>；
+    愿景 <b class="g">second-level realtime</b> <span class="tag target">TARGET</span>，
+    PR #401 已在 m1.local 端到端实测 <b class="g">≤1.3 秒</b> <span class="tag real">REAL</span>。
+    剩余 milestone <b class="v">M-F2-B / C / D</b> 把 hook 写入、生产路由、隐私门关闭。
+  </div>
+  <div class="foot">
+    <span><b>已验证</b> · PR #401 SSE 端到端 loop · m1.local · 2026-05-13 <span class="tag real">REAL</span></span>
+    <span><b>待发</b> · M-F2-B（hook wire）→ M-F2-C（prod receiver + privacy）→ M-F2-D（judge harness）</span>
+    <span><b>事实源</b> · <code style="color:var(--ink)">docs/BUSINESS-FEATURES.md §Feature #2</code></span>
+    <span><b>页面生成</b> · <span id="livesince">—</span></span>
+  </div>
+</div>
+
+<footer>
+  Mock 生成于 <span id="genstamp">—</span> · TeamBrain Feature #2 v2 · 给 CEO 演示用 · 复刻 PR #401 看板视觉<br>
+  本页 100% self-contained · 无 CDN · 无网络 · 关闭浏览器即蒸发 ·
+  ground truth 文档：<code>docs/BUSINESS-FEATURES.md §Feature #2</code> ·
+  <code>docs/plans/2026-05-11-feature-2-secondlevel-realtime/plan.md</code> ·
+  <code>packages/digital-twin/src/bin-realtime-demo.ts</code>
+</footer>
+
+<!-- ============================== JS ============================== -->
+<script>
+(function(){
+  /* -------- 时钟 -------- */
+  function pad(n,w){ w=w||2; return String(n).padStart(w,'0'); }
+  function hms(d){ return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()); }
+  function hmsms(d){ return hms(d)+'.'+pad(d.getMilliseconds(),3); }
+  const clockHms = document.getElementById('clock-hms');
+  const clockMs  = document.getElementById('clock-ms');
+  const clockDate= document.getElementById('clock-date');
+  const tx1Clock = document.getElementById('tx1-clock');
+  const tx2Clock = document.getElementById('tx2-clock');
+  const tx3Clock = document.getElementById('tx3-clock');
+  function tickClock(){
+    const d = new Date();
+    clockHms.textContent = hms(d);
+    clockMs.textContent  = '.'+pad(d.getMilliseconds(),3);
+    clockDate.textContent = d.toISOString().slice(0,10);
+    tx1Clock.textContent = hms(d);
+    tx2Clock.textContent = hms(d);
+    tx3Clock.textContent = hms(d);
+  }
+  tickClock(); setInterval(tickClock, 67);
+
+  const started = new Date();
+  document.getElementById('ssestart').textContent = hms(started);
+  document.getElementById('livesince').textContent = started.toISOString().replace('T',' ').slice(0,19)+'Z';
+  document.getElementById('genstamp').textContent = started.toISOString();
+  document.getElementById('firstFrame').textContent = started.toISOString().slice(11,23);
+
+  /* -------- 老板看板 8 行 -------- */
+  const TEAM = [
+    { id:'alice', name:'Alice Chen',   focus:'auth-service',     tool:'Edit',  file:'rotate.ts',  ev:'编辑令牌轮换', stale: 0 },
+    { id:'bob',   name:'Bob Park',     focus:'billing-api',      tool:'Bash',  file:'kubectl',    ev:'诊断 429 限流',  stale: 0 },
+    { id:'carol', name:'Carol Yu',     focus:'frontend/web',     tool:'Task',  file:'Pricing.tsx',ev:'三路 subagent',  stale: 0 },
+    { id:'dave',  name:'Dave Wójcik',  focus:'ingest-pipe',      tool:'Edit',  file:'parser.ts',  ev:'重试 ×3（卡住）', stale: 45 },
+    { id:'erin',  name:'Erin Okafor',  focus:'rocketteam-ui',    tool:'Read',  file:'Hero.tsx',   ev:'查 Hero 渲染',    stale: 2 },
+    { id:'frank', name:'Frank Müller', focus:'infra/iac',        tool:'Write', file:'main.tf',    ev:'重命名 module', stale: 8 },
+    { id:'gita',  name:'Gita Iyer',    focus:'observability',    tool:'Grep',  file:'metrics.ts', ev:'查 P99 退化',     stale: 4 },
+    { id:'hugo',  name:'Hugo Almeida', focus:'docs',             tool:'Edit',  file:'CLAUDE.md',  ev:'更新规则锚点',   stale: 33 },
+  ];
+  const grid = document.getElementById('kanban-grid');
+  const evCountEl = document.getElementById('evCount');
+  const evCountEl2 = document.getElementById('evcount2');
+  const lastFrameEl = document.getElementById('lastFrame');
+  const streamEl = document.getElementById('stream');
+
+  TEAM.forEach(t => {
+    const row = document.createElement('div');
+    row.id = 'kr-' + t.id;
+    row.className = 'kanban-row' + (t.stale > 30 ? ' stale' : '');
+    row.innerHTML = `
+      <div class="who">${t.name}<span style="color:#94a3b8;font-weight:400">@${t.id}</span></div>
+      <div class="session">session: <span id="ks-${t.id}">019dd-${Math.random().toString(16).slice(2,6)}</span></div>
+      <div class="event"><span id="ke-${t.id}">${t.ev}</span></div>
+      <div class="cwd"><span id="kf-${t.id}">${t.file}</span> @ <span style="color:#0b1220">main</span></div>
+      <div class="ctx">ctx: <span id="kt-${t.id}">${(35000 + Math.floor(Math.random()*15000)).toLocaleString()}</span>
+                       (${(15 + Math.floor(Math.random()*25))}%) · model: claude-opus-4-7</div>
+      ${t.stale > 30 ? `<div class="stale-marker">stale ${t.stale}s · 注意</div>` : ''}
+    `;
+    grid.appendChild(row);
+  });
+
+  /* -------- 事件流 + 中文摘要 -------- */
+  const NARRATIONS = {
+    alice: ['在改 token 轮换契约', '补一个边界测试', '已通过 4/6 contract'],
+    bob:   ['查 K8s ConfigMap 漂移', '已找到 80rps 残留', '建议回滚 ConfigMap'],
+    carol: ['三个 layout 并行 shotgun', 'pnpm build 进行中', 'design-shotgun 出图'],
+    dave:  ['同文件第 3 次重试', '可能需要人介入', 'parser 边界态卡住'],
+    erin:  ['读 Hero.tsx 现状', '想加 ScrollIndicator', '比对 Figma 设计'],
+    frank: ['Terraform module 改名', 'plan 已 clean', '准备 apply'],
+    gita:  ['查 p99 跳升根因', '指向 GC pressure', '准备开 issue'],
+    hugo:  ['同步 CLAUDE.md anchor', '加 visual-proof 章节', '准备 PR']
+  };
+  const TOOL_HINTS = ['Edit','Bash','Read','Grep','Glob','Write','Task','WebFetch'];
+  let events = 0;
+  function pushEvent(who, tool, body, cnHint, isErr){
+    const ts = new Date();
+    lastFrameEl.textContent = ts.toISOString().slice(11,23);
+    const li = document.createElement('li');
+    const whoCol = (who === 'dave' && isErr) ? 'style="color:var(--red)"' : '';
+    li.innerHTML = `
+      <span class="ts">${hmsms(ts)}</span>
+      <span class="who" ${whoCol}>${who}</span>
+      <span class="body">
+        <span class="${isErr ? 'r' : 'k'}">${tool}</span> · ${body}
+        <span class="cn">— ${cnHint}</span>
+      </span>
+    `;
+    streamEl.insertBefore(li, streamEl.firstChild);
+    while (streamEl.children.length > 14) streamEl.removeChild(streamEl.lastChild);
+    events++;
+    evCountEl.textContent = events;
+    evCountEl2.textContent = events;
+  }
+
+  /* -------- 看板 stale 计时 + 周期事件 -------- */
+  function tickKanban(){
+    TEAM.forEach(t => {
+      t.stale += 1 + Math.random()*0.4;
+      const row = document.getElementById('kr-'+t.id);
+      if (t.stale > 30 && !row.classList.contains('stale')) row.classList.add('stale');
+    });
+  }
+  setInterval(tickKanban, 1000);
+
+  function pickTeammate(){
+    /* dave 65% 继续卡住，其它人均匀概率 */
+    const alive = TEAM.filter(x => x.id !== 'dave');
+    if (Math.random() < 0.18) return TEAM.find(x => x.id === 'dave');
+    return alive[Math.floor(Math.random()*alive.length)];
+  }
+  function injectActivity(){
+    const t = pickTeammate();
+    const isErr = (t.id === 'dave');
+    const tool = isErr ? 'retry-loop' : TOOL_HINTS[Math.floor(Math.random()*TOOL_HINTS.length)];
+    const narr = NARRATIONS[t.id];
+    const body = isErr
+      ? `同文件 Edit 第 ${3 + Math.floor(Math.random()*2)} 次 · ${t.file}`
+      : `${t.ev} · <span style="color:var(--ink-dim)">${t.focus}/${t.file}</span>`;
+    pushEvent(t.id, tool, body, narr[Math.floor(Math.random()*narr.length)], isErr);
+
+    if (!isErr){
+      t.stale = 0;
+      const ev = document.getElementById('ke-'+t.id);
+      if (ev) ev.textContent = narr[Math.floor(Math.random()*narr.length)];
+    }
+    const row = document.getElementById('kr-'+t.id);
+    if (row && !isErr) row.classList.remove('stale');
+  }
+  function loop(){
+    injectActivity();
+    setTimeout(loop, 350 + Math.random()*900);
+  }
+  loop();
+
+  /* -------- KPI 漂移已移除 --------
+     v3 把所有可编造 KPI 数字换成了 verbatim 文档引用，
+     不再让 JS 随机漂移虚构数字。p50 = 1.30 是 PR #401 实测固定值。
+  */
+
+  /* -------- tmux 内行末闪烁 cursor 随机抖动 -------- */
+  const inputs = [
+    ['tx1-input', ['等待 Edit 完成 …', '准备跑 contract test', '4/6 contract 通过 · 继续修', '已暂停 · 等 alice 决定']],
+    ['tx2-input', ['等用户确认 kubectl patch …', 'patch 已写好 · 等回车', '已应用 · 监控 5 分钟', '429 风暴止住']],
+    ['tx3-input', ['等待 next build 输出 …', 'build 36 modules · 78%', 'build 通过 · 跑 typecheck', '合并 3 个 subagent 输出']],
+  ];
+  inputs.forEach(([id, list]) => {
+    let i = 0;
+    setInterval(() => {
+      i = (i+1) % list.length;
+      const el = document.getElementById(id);
+      if (el) el.textContent = list[i];
+    }, 4500 + Math.random()*1500);
+  });
+})();
+</script>
+</body>
+</html>
